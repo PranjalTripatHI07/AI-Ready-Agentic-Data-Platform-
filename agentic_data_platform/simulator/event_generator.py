@@ -9,10 +9,10 @@ import random
 import time 
 import sys 
 from datetime import datetime, timezone 
-from Kafka import KafkaProducer  # KafkaProducer accepts python data (python object)->(stores in byte) and send it to kafka
+from kafka import KafkaProducer  # KafkaProducer accepts python data (python object)->(stores in byte) and send it to kafka
 from kafka.errors import KafkaError # KafkaError is the base class used for handling Kafka-related failures
 
-
+# Note -> Kafka is like a post office - it receives messages and delivers them.
 
 # here we are doing Kafka Configuration
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
@@ -47,7 +47,7 @@ def generate_event() -> dict: # This function generates one random e-commerce ev
     """
 
    # Select a single event type using weighted random selection and extract the value from the returned list
-   event_type = random.choices(EVENT_TYPES, weights=EVENT_WEIGHTS, k=1)[0]
+    event_type = random.choices(EVENT_TYPES, weights=EVENT_WEIGHTS, k=1)[0]
 
     # Generate user and product IDs
     user_id = random.randint(*USER_ID_RANGE)
@@ -57,17 +57,17 @@ def generate_event() -> dict: # This function generates one random e-commerce ev
    # BUSINESS LOGIC:- 
    # If the event is a purchase, generate a random product price; otherwise set price to 0 for non-revenue events
    # Price is 0 for view/cart
-   if event_type == "purchase":
+    if event_type == "purchase":
         price = round(random.uniform(PRICE_MIN, PRICE_MAX), 2)
     else:
         price = 0.0  # Price is 0 for view/cart
     
   
    # Generate ISO-8601 timestamp
-   timestamp = datetime.now(timezone.utc).isoformat()
+    timestamp = datetime.now(timezone.utc).isoformat()
 
 
-   event = {
+    event = {
         "user_id": user_id,
         "product_id": product_id,
         "event_type": event_type,
@@ -123,16 +123,14 @@ def on_send_error(excp): # This function is called automatically after a message
 
 
 def main():
-    
-"""
-This main() function initializes the Kafka producer, continuously generates and sends events in real time, 
-handles asynchronous delivery callbacks, and ensures a graceful shutdown on user interruption.
-"""
-
     """
+    This main() function initializes the Kafka producer, continuously generates and sends events in real time, 
+    handles asynchronous delivery callbacks, and ensures a graceful shutdown on user interruption.
+    
     Main function to generate events and send them to Kafka.
     Generates 1 event per second, runs infinitely.
     """
+    
     print("=" * 60)
     print("E-commerce Event Generator (Kafka Mode)")
     print(f"Topic: {KAFKA_TOPIC}")
