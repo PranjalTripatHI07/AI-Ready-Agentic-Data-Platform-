@@ -26,7 +26,7 @@ VALID_EVENT_TYPES = ["view", "cart", "purchase"]
 
 def create_spark_session() -> SparkSession:
     """
-    Create and configure Spark session with Delta Lake support.
+    Create and configure Spark session with Delta Lake support. 
     """
     spark = SparkSession.builder \
         .appName("Silver_Layer_Cleaning") \
