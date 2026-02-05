@@ -6,10 +6,29 @@ Reads Bronze Delta table, applies data quality rules, and writes cleaned data.
 FAILS on invalid data - strict validation enforced.
 """
 
+
+
+
+# # SparkSession is the entry point to Spark.
+# It starts the Spark engine and lets us read, process, and write data using DataFrames.
 from pyspark.sql import SparkSession
+
+
+
+# Spark SQL functions for data transformations and validations
+# We will use these functions to check for nulls, filter data, and perform transformations.
+# col -> used to reference columns in DataFrames
+# to_timestamp -> converts string to timestamp type
+# trim -> removes leading/trailing whitespace
+# lower -> converts string to lowercase
+# count -> counts the number of records that match a condition
+# lit -> creates a literal value (used for adding constant columns)
 from pyspark.sql.functions import (
     col, to_timestamp, trim, lower, count, lit
 )
+
+
+
 from pyspark.sql.types import TimestampType
 import sys
 
