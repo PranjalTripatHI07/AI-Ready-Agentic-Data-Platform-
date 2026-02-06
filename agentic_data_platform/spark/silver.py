@@ -15,29 +15,39 @@ from pyspark.sql import SparkSession
 
 
 
-# Spark SQL functions for data transformations and validations
+
+
+# Spark SQL functions for data transformations and validations 
 # We will use these functions to check for nulls, filter data, and perform transformations.
-# col -> used to reference columns in DataFrames
-# to_timestamp -> converts string to timestamp type
-# trim -> removes leading/trailing whitespace
-# lower -> converts string to lowercase
-# count -> counts the number of records that match a condition
-# lit -> creates a literal value (used for adding constant columns)
+# col -> used to reference columns in DataFrames -> (Refer to DataFrame columns safely)
+# to_timestamp -> converts string to timestamp type 
+# trim -> removes leading/trailing whitespace -> (Remove extra spaces)
+# lower -> converts string to lowercase 
+# count -> counts the number of records that match a condition. ->(Count records)
+# lit -> creates a literal value (used for adding constant columns) -> (Create constant columns (future-proofing))
 from pyspark.sql.functions import (
     col, to_timestamp, trim, lower, count, lit
 )
 
 
+# We will also use TimestampType to ensure our event_timestamp column is properly typed in the Silver layer.
+from pyspark.sql.types import TimestampType 
 
-from pyspark.sql.types import TimestampType
-import sys
+
+
+import sys 
+
 
 # Here we are defining the paths for bronze data storage, silver data storage, and Spark checkpointing
+# We use os.path to construct these paths in a way that is portable across different operating systems.
+# BASE_PATH is the root directory of our project, and we build the other paths relative to it.
+# This way, we can easily manage our data and checkpoints without hardcoding absolute paths.
+# The checkpoint path is important for Spark streaming jobs, but we include it here for future-proofing in case we want to convert this batch job to a streaming job later on.
 import os
-BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BRONZE_PATH = os.path.join(BASE_PATH, "data/bronze/ecommerce_events")
-SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events")
-CHECKPOINT_PATH = os.path.join(BASE_PATH, "data/checkpoints/silver")
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
+BRONZE_PATH = os.path.join(BASE_PATH, "data/bronze/ecommerce_events") # Path to store raw bronze data
+SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to store cleaned silver data
+CHECKPOINT_PATH = os.path.join(BASE_PATH, "data/checkpoints/silver")  # Path for Spark checkpointing
 
 # Valid event types
 VALID_EVENT_TYPES = ["view", "cart", "purchase"]
