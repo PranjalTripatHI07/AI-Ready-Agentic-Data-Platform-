@@ -91,7 +91,7 @@ def create_spark_session() -> SparkSession:
         .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.1.0") \
         .getOrCreate()
     
-    spark.sparkContext.setLogLevel("WARN")
+    spark.sparkContext.setLogLevel("WARN") # Set log level to WARN to reduce verbosity
     return spark
 
 
@@ -99,20 +99,29 @@ def create_spark_session() -> SparkSession:
 
 
 
-def read_bronze_data(spark: SparkSession):
+
+# This function reads raw data from the Bronze Delta table, verifies that data exists, 
+# and safely returns it to the pipeline — or fails the job if something is wrong.
+
+def read_bronze_data(spark: SparkSession): # We pass the Spark session as an argument to this function so that it can use it to read data from the Bronze Delta table.
     """
     Read data from Bronze Delta table.
     """
     print(f"Reading from Bronze path: {BRONZE_PATH}")
     
     try:
-        bronze_df = spark.read.format("delta").load(BRONZE_PATH)
-        record_count = bronze_df.count()
-        print(f"✓ Read {record_count} records from Bronze layer")
-        return bronze_df
-    except Exception as e:
+        bronze_df = spark.read.format("delta").load(BRONZE_PATH) # Read the Bronze Delta table into a DataFrame
+        record_count = bronze_df.count() # Count the number of records read from the Bronze layer to provide feedback on the volume of data being processed.
+        print(f"✓ Read {record_count} records from Bronze layer")  # Print a success message with the number of records read from the Bronze layer.
+        return bronze_df # Return the DataFrame containing the Bronze data for further processing in the pipeline.
+    except Exception as e: 
         print(f"✗ Failed to read Bronze data: {e}")
-        sys.exit(1)
+        sys.exit(1) # Exit the program with a non-zero status code to indicate failure if there was an error reading the Bronze data.
+
+
+
+
+
 
 
 def validate_data_quality(df, spark: SparkSession) -> bool:
