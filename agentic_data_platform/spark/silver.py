@@ -123,7 +123,8 @@ def read_bronze_data(spark: SparkSession): # We pass the Spark session as an arg
 
 
 
-
+#This function checks whether the Bronze data is clean enough to be trusted, and 
+# stops the entire pipeline if any serious data quality problem is found.
 def validate_data_quality(df, spark: SparkSession) -> bool:
     """
     Check for data quality issues that should cause failure.
@@ -131,7 +132,7 @@ def validate_data_quality(df, spark: SparkSession) -> bool:
     """
     print("\nRunning data quality validations...")
     
-    issues = []
+    issues = [] # List to collect data quality issues found
     
     # Check 1: Null user_id
     null_users = df.filter(col("user_id").isNull()).count()
@@ -140,8 +141,8 @@ def validate_data_quality(df, spark: SparkSession) -> bool:
     
     # Check 2: Invalid event_type
     invalid_events = df.filter(
-        ~lower(trim(col("event_type"))).isin([e.lower() for e in VALID_EVENT_TYPES])
-    ).count()
+        ~lower(trim(col("event_type"))).isin([e.lower() for e in VALID_EVENT_TYPES]) # Normalize event_type to lowercase and check if it's in valid types
+    ).count() # Count records with invalid event_type
     if invalid_events > 0:
         issues.append(f"Found {invalid_events} records with invalid event_type")
     
@@ -167,13 +168,17 @@ def validate_data_quality(df, spark: SparkSession) -> bool:
         print("\n" + "=" * 60)
         print("DATA QUALITY ISSUES DETECTED - JOB WILL FAIL")
         print("=" * 60)
-        for issue in issues:
+        for issue in issues: # Print each data quality issue found
             print(f"  ✗ {issue}")
         print("=" * 60)
-        return False
+        return False # Return False to indicate that data quality validation failed
     
     print("✓ All data quality checks passed")
-    return True
+    return True # Return True to indicate that data quality validation passed
+
+
+
+
 
 
 def clean_data(df):
