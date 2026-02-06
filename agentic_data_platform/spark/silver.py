@@ -180,8 +180,11 @@ def validate_data_quality(df, spark: SparkSession) -> bool:
 
 
 
+# This function applies cleaning transformations to the Bronze data to prepare it for the Silver layer.
 
-def clean_data(df):
+#This function takes already-validated Bronze data, cleans and standardizes it, 
+# and shapes it into the final Silver-layer schema.
+def clean_data(df): # We pass the DataFrame containing the Bronze data to this function, and it will return a new DataFrame that has been cleaned and transformed according to our Silver layer requirements.
     """
     Apply cleaning transformations to the data.
     """
@@ -219,6 +222,9 @@ def clean_data(df):
     )
     
     return silver_df
+
+
+
 
 
 def write_to_silver(df, output_path: str):
