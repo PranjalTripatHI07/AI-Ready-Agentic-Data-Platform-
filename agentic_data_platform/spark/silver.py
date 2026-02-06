@@ -49,14 +49,41 @@ BRONZE_PATH = os.path.join(BASE_PATH, "data/bronze/ecommerce_events") # Path to 
 SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to store cleaned silver data
 CHECKPOINT_PATH = os.path.join(BASE_PATH, "data/checkpoints/silver")  # Path for Spark checkpointing
 
-# Valid event types
+
+
+
+
+# here we are defining the event types that are allowed to exist in the Silver layer.
+# Valid event types 
 VALID_EVENT_TYPES = ["view", "cart", "purchase"]
 
 
+
+
+
+# This function starts Spark and prepares it to read streaming data from Kafka 
+# and write data to Delta Lake, using the required configurations and dependencies.
 def create_spark_session() -> SparkSession:
     """
     Create and configure Spark session with Delta Lake support. 
     """
+    # Building a Spark session with necessary configurations for Delta Lake and Kafka integration.
+    # Note -> We are using Delta Lake to store raw streaming data from Kafka in a 
+    # safe, reliable, and replayable way.
+
+    # Configurations include:
+    # spark.sql.extensions -> to enable Delta Lake SQL extensions
+    # spark.sql.catalog.spark_catalog -> to use Delta Lake as the default catalog
+    # spark.jars.packages -> to include the Delta Lake Spark connector dependency
+    # We specify the version of Delta Lake that is compatible with our Spark version (3.1.0 in this case).
+    # This setup allows us to read and write Delta tables seamlessly in our Spark application.
+    # We also set the log level to WARN to reduce verbosity in the console output, making it easier to spot important messages and errors.
+    # Finally, we return the created Spark session object for use in our main processing logic.
+    
+    #Note:-   
+    #  .appName -> Sets the name of the Spark application.
+    #  .config -> Configures various Spark settings.
+    #  .getOrCreate() -> Creates the Spark session if it doesn't exist, otherwise returns the existing one.
     spark = SparkSession.builder \
         .appName("Silver_Layer_Cleaning") \
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
@@ -66,6 +93,10 @@ def create_spark_session() -> SparkSession:
     
     spark.sparkContext.setLogLevel("WARN")
     return spark
+
+
+
+
 
 
 def read_bronze_data(spark: SparkSession):
