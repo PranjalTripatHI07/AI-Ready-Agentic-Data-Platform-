@@ -197,6 +197,8 @@ def clean_data(df): # We pass the DataFrame containing the Bronze data to this f
     cleaned_df = cleaned_df.filter(col("user_id").isNotNull())
     
     # Normalize event_type to lowercase
+    # df.withColumn() -> is a spark function which is used to create a new column or modify an existing column in a Spark DataFrame.
+    # df.withColumn() -> (Think of it as: “Add or update a column.”)
     cleaned_df = cleaned_df.withColumn("event_type", lower(trim(col("event_type"))))
     
     # Filter only valid event types
@@ -212,6 +214,7 @@ def clean_data(df): # We pass the DataFrame containing the Bronze data to this f
     cleaned_df = cleaned_df.filter(col("event_timestamp_parsed").isNotNull())
     
     # Select and rename columns for Silver layer
+    # here we are basically performing a SQL SELECT operation.
     silver_df = cleaned_df.select(
         col("user_id"),
         col("product_id"),
