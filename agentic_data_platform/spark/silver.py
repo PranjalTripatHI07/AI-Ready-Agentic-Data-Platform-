@@ -224,20 +224,49 @@ def clean_data(df): # We pass the DataFrame containing the Bronze data to this f
         col("kafka_timestamp").alias("ingestion_timestamp")
     )
     
-    return silver_df
+    return silver_df # Return the cleaned DataFrame that is now ready to be written to the Silver layer.
 
 
 
 
-
-def write_to_silver(df, output_path: str):
+# This function takes the cleaned Silver-ready data and safely writes it to a Delta table, 
+# then reports how many records were written.
+def write_to_silver(df, output_path: str): 
     """
+    We pass the cleaned DataFrame and the output path for the Silver Delta table to this function, 
+    which will handle writing the data to storage and return the count of records written.
+    
+    This function takes:
+
+        df -> the cleaned Silver DataFrame
+
+        output_path -> where to save the Silver table
+
     Write cleaned data to Silver Delta table.
     """
     print(f"\nWriting to Silver path: {output_path}")
     
-    record_count = df.count()
+    record_count = df.count() # Count the number of records in the cleaned DataFrame to provide feedback on how many records are being written to the Silver layer.
     
+    """ 
+    # df.write -> is a Spark DataFrameWriter object that allows us to specify how we want to write the DataFrame to storage.
+
+    # .format("delta") -> specifies that we want to write the data in Delta Lake format.
+
+    # .mode("overwrite") -> specifies that if there is already data at the output path, 
+       it should be overwritten with the new data. This is important for our Silver layer because 
+       we want to ensure that it always reflects the latest cleaned data from the Bronze layer.
+
+
+    # .option("overwriteSchema", "true") -> allows the schema of the Delta table to be overwritten 
+      if it has changed. This is useful for future-proofing our pipeline, as it allows us to make changes 
+      to the data schema in the future without having to manually manage schema changes in the Delta table.
+
+      
+    # .save(output_path) -> specifies the path where the Silver Delta table should be saved. 
+       This will create a new Delta table at the specified location with the cleaned data from the DataFrame.
+    
+    """
     df.write \
         .format("delta") \
         .mode("overwrite") \
