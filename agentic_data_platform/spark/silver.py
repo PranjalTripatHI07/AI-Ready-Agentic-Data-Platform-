@@ -277,6 +277,12 @@ def write_to_silver(df, output_path: str):
     return record_count
 
 
+
+
+
+# This main() function orchestrates the full Silver layer workflow: (Orchestrates means controlling and 
+# coordinating different steps so they run in the right order.)
+# start Spark → read Bronze → validate → clean → write Silver → shut down Spark.
 def main():
     """
     Main function to run the Silver layer processing pipeline.
@@ -295,8 +301,16 @@ def main():
     # Read Bronze data
     bronze_df = read_bronze_data(spark)
     
+
+
+
     # Validate data quality - FAIL if issues found
-    is_valid = validate_data_quality(bronze_df, spark)
+    """
+    We pass the Bronze DataFrame and the Spark session to the validate_data_quality function, which will 
+    check for data quality issues and return True if the data is valid or False if there are issues 
+    that should cause the pipeline to fail.
+    """
+    is_valid = validate_data_quality(bronze_df, spark) 
     
     if not is_valid:
         print("\n✗ PIPELINE FAILED: Data quality validation errors detected!")
@@ -315,7 +329,7 @@ def main():
     print(f"Records processed: {records_written}")
     print("=" * 60)
     
-    spark.stop()
+    spark.stop() # Stop the Spark session to free up resources after the processing is complete.
 
 
 if __name__ == "__main__":
