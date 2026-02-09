@@ -8,7 +8,25 @@ Outputs:
   - Conversion rate
 """
 
-from pyspark.sql import SparkSession
+
+
+# Import SparkSession to create a Spark session for processing data.
+from pyspark.sql import SparkSession 
+
+
+
+# Import Spark SQL functions for data transformations and aggregations.
+# These functions allow us to manipulate and analyze the data in various ways, such as filtering, grouping, and calculating metrics.
+
+# col: Used to reference a column in a DataFrame.
+# hour: Extracts the hour from a timestamp.
+# date_trunc: Truncates a timestamp to a specified unit (e.g., hour).
+# sum: Calculates the sum of a column.
+# count: Counts the number of rows or non-null values in a column.
+# countDistinct: Counts the number of distinct values in a column.
+# when: Used for conditional expressions in DataFrame transformations.
+# round: Rounds a numeric column to a specified number of decimal places.
+# lit: Creates a column with a literal value.
 from pyspark.sql.functions import (
     col, hour, date_trunc, sum as spark_sum, count, countDistinct,
     when, round as spark_round, lit
