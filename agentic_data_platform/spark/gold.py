@@ -85,23 +85,28 @@ def create_spark_session() -> SparkSession:
 
 
 
-
-def read_silver_data(spark: SparkSession):
+# This function safely loads Silver data and makes sure the pipeline stops if the data is missing or broken
+def read_silver_data(spark: SparkSession): 
     """
     Read data from Silver Delta table.
     """
     print(f"Reading from Silver path: {SILVER_PATH}")
     
     try:
-        silver_df = spark.read.format("delta").load(SILVER_PATH)
-        record_count = silver_df.count()
-        print(f"✓ Read {record_count} records from Silver layer")
+        silver_df = spark.read.format("delta").load(SILVER_PATH) # Load the Silver Delta table into a DataFrame. 
+        record_count = silver_df.count() # Count the number of records in the DataFrame to confirm successful loading. 
+        print(f"✓ Read {record_count} records from Silver layer") 
         return silver_df
     except Exception as e:
         print(f"✗ Failed to read Silver data: {e}")
-        sys.exit(1)
+        sys.exit(1) # Exit the program with a non-zero status code to indicate failure.
 
 
+
+
+
+# These functions perform the actual business aggregations on the Silver data to create the Gold tables.
+# Each function takes the Silver DataFrame and the Spark session as input, performs the necessary transformations and aggregations, and returns a new DataFrame with the results.
 def calculate_revenue_per_hour(df, spark: SparkSession):
     """
     Calculate total revenue aggregated by hour.
@@ -110,6 +115,18 @@ def calculate_revenue_per_hour(df, spark: SparkSession):
     print("\nCalculating Revenue per Hour...")
     
     # Filter for purchase events and aggregate by hour
+
+    # .filter(col("event_type") == "purchase") -> Filter purchase events
+
+    # .withColumn("hour", date_trunc("hour", col("event_timestamp"))) -> Create a new column "hour" by truncating the event timestamp to the hour level.
+
+    # .groupBy("hour") -> Group the data by the "hour" column to perform aggregations for each hour.
+
+    # .agg(...) -> Perform multiple aggregations:
+    #   - spark_round(spark_sum("price"), 2).alias("total_revenue") -> Calculate the total revenue by summing the "price" column and rounding it to 2 decimal places.
+    #   - count("*").alias("purchase_count") -> Count the number of purchase events for each hour.
+    #   - spark_round(spark_sum("price") / count("*"), 2).alias("avg_order_value") -> Calculate the average order value by dividing the total revenue by the purchase count and rounding it to 2 decimal places.
+    # .orderBy(col("hour").desc()) -> Order the results by hour in descending order to show the most recent hours first.    
     revenue_df = df \
         .filter(col("event_type") == "purchase") \
         .withColumn("hour", date_trunc("hour", col("event_timestamp"))) \
@@ -123,9 +140,12 @@ def calculate_revenue_per_hour(df, spark: SparkSession):
     
     # Show sample output
     print("\nSample Revenue per Hour:")
-    revenue_df.show(5, truncate=False)
+    revenue_df.show(5, truncate=False) # Display the first 5 rows of the revenue DataFrame to verify the results of the aggregation.
     
-    return revenue_df
+    return revenue_df # Return the resulting DataFrame containing the revenue per hour to be written to the Gold layer later in the pipeline.
+
+
+
 
 
 def calculate_active_users_per_hour(df, spark: SparkSession):
