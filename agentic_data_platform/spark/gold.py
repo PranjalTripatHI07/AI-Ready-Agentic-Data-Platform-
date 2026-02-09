@@ -173,6 +173,10 @@ def calculate_active_users_per_hour(df, spark: SparkSession):
     return active_users_df
 
 
+
+
+
+
 def calculate_conversion_rate(df, spark: SparkSession):
     """
     Calculate conversion rate (views -> cart -> purchase funnel).
@@ -221,6 +225,10 @@ def calculate_conversion_rate(df, spark: SparkSession):
     ).show(5, truncate=False)
     
     return conversion_df
+
+
+
+
 
 
 def write_to_delta(df, output_path: str, table_name: str):
