@@ -31,21 +31,45 @@ from pyspark.sql.functions import (
     col, hour, date_trunc, sum as spark_sum, count, countDistinct,
     when, round as spark_round, lit
 )
+
+
+
+
+# Import sys for handling system-level operations, such as exiting the program in case of errors.
 import sys
 
+
+
+
 # Configuration
+
+# Define file paths for Silver input and Gold output. 
+# These paths are constructed based on the directory structure of the project.
 import os
-BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events")
-GOLD_PATH = os.path.join(BASE_PATH, "data/gold")
-REVENUE_PATH = os.path.join(GOLD_PATH, "revenue_per_hour")
-ACTIVE_USERS_PATH = os.path.join(GOLD_PATH, "active_users_per_hour")
-CONVERSION_RATE_PATH = os.path.join(GOLD_PATH, "conversion_rate")
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
+GOLD_PATH = os.path.join(BASE_PATH, "data/gold") # Define the path for the Gold layer output
+REVENUE_PATH = os.path.join(GOLD_PATH, "revenue_per_hour") # Define the path for the revenue per hour output
+ACTIVE_USERS_PATH = os.path.join(GOLD_PATH, "active_users_per_hour") # Define the path for the active users per hour output
+CONVERSION_RATE_PATH = os.path.join(GOLD_PATH, "conversion_rate") # Define the path for the conversion rate output
 
 
-def create_spark_session() -> SparkSession:
+
+# This function creates and configures a Spark session with Delta Lake support, which is necessary for 
+# reading and writing Delta tables in the Silver and Gold layers.
+def create_spark_session() -> SparkSession: 
     """
     Create and configure Spark session with Delta Lake support.
+
+
+    This function initializes a Spark session with the necessary configurations to work with Delta Lake.
+
+    .appName -> Sets the name of the Spark application, which will be displayed in the Spark UI.
+
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") -> Adds the Delta Lake extension to Spark, enabling support for Delta Lake features.
+
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") -> Configures the Spark catalog to use Delta Lake.
+
+    .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.1.0") -> Specifies the Delta Lake package to be used.
     """
     spark = SparkSession.builder \
         .appName("Gold_Layer_Aggregations") \
@@ -54,8 +78,12 @@ def create_spark_session() -> SparkSession:
         .config("spark.jars.packages", "io.delta:delta-spark_2.12:3.1.0") \
         .getOrCreate()
     
-    spark.sparkContext.setLogLevel("WARN")
-    return spark
+    spark.sparkContext.setLogLevel("WARN") # Set log level to WARN to reduce verbosity in the console output.
+    return spark # Return the created Spark session to be used for data processing in the Gold layer.
+
+
+
+
 
 
 def read_silver_data(spark: SparkSession):
