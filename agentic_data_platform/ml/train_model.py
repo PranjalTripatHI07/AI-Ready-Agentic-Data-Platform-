@@ -53,6 +53,7 @@ METRICS_FILE = os_module.path.join(MODEL_PATH, "metrics.json") # Path to save th
 
 
 # Feature columns for training (excluding target and metadata)
+# These are the features that will be used to train the logistic regression model.
 FEATURE_COLUMNS = [
     "purchases_last_24h",
     "total_purchases",
@@ -71,37 +72,54 @@ FEATURE_COLUMNS = [
     "overall_conversion"
 ]
 
-TARGET_COLUMN = "is_purchaser"
+TARGET_COLUMN = "is_purchaser" # The target variable we want to predict, indicating whether a user made a purchase (1) or not (0)
 
 
+
+
+# This functions implement the machine learning pipeline 
+# including:- 
+# loading features  
+# preparing data 
+# training the model 
+# evaluating performance
+# saving artifacts. 
+
+# Each function includes print statements to provide feedback on the process and results.
 def load_features():
     """
     Load feature data from Delta Lake using pandas.
     Falls back to parquet if delta-rs not available.
+
+    # Note: Delta Lake stores data in parquet format, so we can read it directly with pandas if delta-rs is not available.
+    # This function first tries to read parquet files from the specified directory. 
+    #     - If no parquet files are found, it attempts to use delta-rs to read the Delta Lake format. 
+    #     - If both methods fail, it raises an error.
+    
     """
     print(f"Loading features from: {FEATURES_PATH}")
     
     try:
         # Try to read as parquet (Delta Lake stores as parquet internally)
-        import glob
-        parquet_files = glob.glob(f"{FEATURES_PATH}/*.parquet")
+        import glob # Used for finding all parquet files in the specified directory
+        parquet_files = glob.glob(f"{FEATURES_PATH}/*.parquet") # Get a list of all parquet files in the features directory
         
         if parquet_files:
-            df = pd.concat([pd.read_parquet(f) for f in parquet_files], ignore_index=True)
+            df = pd.concat([pd.read_parquet(f) for f in parquet_files], ignore_index=True) # Read each parquet file into a DataFrame and concatenate them into a single DataFrame
         else:
             # Try with delta-rs if available
             try:
                 from deltalake import DeltaTable
                 dt = DeltaTable(FEATURES_PATH)
-                df = dt.to_pandas()
+                df = dt.to_pandas() # Convert the DeltaTable to a pandas DataFrame
             except ImportError:
-                raise FileNotFoundError(f"No parquet files found in {FEATURES_PATH}")
+                raise FileNotFoundError(f"No parquet files found in {FEATURES_PATH}") # Raise an error if no parquet files are found and delta-rs is not available
         
         print(f"✓ Loaded {len(df)} records")
         return df
     except Exception as e:
         print(f"✗ Failed to load features: {e}")
-        raise
+        raise # Re-raise the exception after logging the error message
 
 
 def prepare_data(df):
