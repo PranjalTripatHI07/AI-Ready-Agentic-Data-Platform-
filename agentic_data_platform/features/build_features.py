@@ -172,7 +172,14 @@ def calculate_purchase_features(df, spark: SparkSession):
     return purchase_features
 
 
-def calculate_event_frequency_features(df, spark: SparkSession):
+
+
+# This Function calculates event frequency features per user, 
+# including:-  
+# total events, 
+# view and cart counts, 
+# unique products interacted with, activity span in hours, and events per hour.
+def calculate_event_frequency_features(df, spark: SparkSession): 
     """
     Calculate event frequency features per user.
     - total_events: Total number of all events
@@ -206,7 +213,8 @@ def calculate_event_frequency_features(df, spark: SparkSession):
             spark_round(
                 (unix_timestamp(col("last_activity")) - unix_timestamp(col("first_activity"))) / 3600,
                 2
-            )
+            ) # Convert seconds to hours and round to 2 decimals  
+              # unix_timestamp() converts a timestamp (date + time) into a number of seconds since: January 1, 1970 (00:00:00 UTC)
         ) \
         .withColumn(
             # Events per hour (avoid divide by zero)
@@ -216,7 +224,8 @@ def calculate_event_frequency_features(df, spark: SparkSession):
                      col("total_events") / col("activity_span_hours"))
                 .otherwise(col("total_events")),
                 2
-            )
+            ) # Calculate events per hour by dividing total events by activity span in hours, and round to 2 decimals. 
+              # If activity span is zero, use total events as the value (to avoid division by zero).
         )
     
     return event_features
