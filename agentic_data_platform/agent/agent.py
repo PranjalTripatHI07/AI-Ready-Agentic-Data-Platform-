@@ -297,66 +297,153 @@ class DataQueryEngine:
     
 
 
-    
+    # get_summary_stats provides summary statistics for a specified table. 
+    # It checks if the table exists in the loaded tables, and if it does, it uses the pandas describe() method 
+    # to generate summary statistics for that table. 
+    # The resulting statistics are returned as a formatted string. 
+    # If the specified table is not found, it returns an error message indicating that the table was not found. 
+    # This method can be used to give the AI agent a quick overview of the data in a specific table when answering questions.
     def get_summary_stats(self, table_name: str) -> str: 
-        """Get summary statistics for a table."""
-        if table_name not in self.tables:
-            return f"Table '{table_name}' not found"
+        """
+        Get summary statistics for a table.
+
+        Args: table_name (str): The name of the table to summarize.
+        Returns: str: A summary of the table's statistics or an error message if the table is not found.
+         - Checks if the specified table exists in the loaded tables. 
+         - If the table exists, it uses the pandas describe() method to generate summary statistics for that table and returns it as a formatted string. 
+         - If the specified table is not found in the loaded tables, it returns an error message indicating that the table was not found.
+         - This method can be used to provide the AI agent with a quick overview of the data in a specific table when answering questions, giving insights into the distribution of values, counts, means, standard deviations, and other relevant statistics for the columns in that table. 
+         - If the table contains non-numeric columns, the describe() method will provide summary statistics for those as well, such as counts, unique values, top values, and frequency for categorical data. 
+         - This allows the AI agent to have a better understanding of the data when formulating responses to user questions based on the contents of the specified table.           
+
+        """
+        if table_name not in self.tables: # Check if the specified table name exists in the loaded tables. If it does not exist, we will return an error message indicating that the table was not found.
+            return f"Table '{table_name}' not found" # Return an error message indicating that the specified table was not found in the loaded tables. This helps to provide feedback to the user if they request summary statistics for a table that does not exist, allowing them to correct their request or check the available tables.
         
-        df = self.tables[table_name]
-        return f"Summary for {table_name}:\n{df.describe().to_string()}"
+        df = self.tables[table_name] # Get the DataFrame for the specified table name from the loaded tables. This allows us to access the data for that table in order to generate summary statistics using the pandas describe() method.
+        return f"Summary for {table_name}:\n{df.describe().to_string()}" # Use the pandas describe() method to generate summary statistics for the specified table's DataFrame and return it as a formatted string. This provides insights into the distribution of values, counts, means, standard deviations, and other relevant statistics for the columns in that table, which can be useful for the AI agent 
+                                                                         # when answering questions based on the data in that table. If the table contains non-numeric columns, the describe() method will provide summary statistics for those as well, such as counts, unique values, top values, and frequency for categorical data. This allows the AI agent to have a better understanding of the data when formulating responses to user questions based on the contents of the specified table.
     
-    def get_data_context(self) -> str:
-        """Get a summary of all data for LLM context."""
-        context_parts = []
+
+
+
+    # get_data_context summarizes all loaded data for use in LLM context.
+    # It iterates through all loaded tables, appending their names, columns, and a string representation of their data to a list. 
+    # The resulting context is returned as a single formatted string. 
+    # This method provides the AI agent with a comprehensive overview of all available data when answering questions, allowing it to reference specific tables and their contents in its responses. 
+    def get_data_context(self) -> str:  
+        """
+        Get a summary of all data for LLM context.
         
-        for table_name, df in self.tables.items():
-            context_parts.append(f"\n=== {table_name} ===")
-            context_parts.append(f"Columns: {list(df.columns)}")
-            context_parts.append(f"Data:\n{df.to_string()}")
+         - Iterates through all loaded tables and appends their names, columns, and a string representation of their data to a list.         
         
-        return "\n".join(context_parts)
+        """
+        context_parts = [] # Initialize an empty list to hold the different parts of the data context that will be built up as we iterate through the loaded tables. This allows us to construct a comprehensive overview of all available data for the AI agent when answering questions.
+        
+        for table_name, df in self.tables.items(): # Iterate through all loaded tables in the self.tables dictionary, where table_name is the name of the table and df is the corresponding pandas DataFrame containing the data for that table. This allows us to access each table's data and metadata to include in the context for the LLM.
+            context_parts.append(f"\n=== {table_name} ===") # Append a header for the current table to the context_parts list, using the table name to clearly indicate which table's data is being summarized. This helps to organize the context and make it easier for the AI agent to reference specific tables when formulating responses to user questions based on the available data.
+            context_parts.append(f"Columns: {list(df.columns)}") # Append a line to the context_parts list that lists the columns of the current table, providing information about the structure of the data in that table. This allows the AI agent to understand what data is available in each table and reference specific columns when answering questions based on the data.
+            context_parts.append(f"Data:\n{df.to_string()}") # Append a line to the context_parts list that includes a string representation of the data in the current table, using the pandas to_string() method to convert the DataFrame into a readable format. This provides the AI agent with direct access to the contents of each table, allowing it to reference specific values 
+                                                             # and insights from the data when formulating responses to user questions based on the available data. If the DataFrame is large, it will be truncated based on pandas' default settings for displaying DataFrames as strings, which helps to keep the context manageable while still providing useful information about the data in each table.
+        
+        return "\n".join(context_parts) # Join all the parts of the context together into a single string with newline characters separating each part, and return it as the final data context for the LLM. 
+                                        # This comprehensive context includes the names of all loaded tables, their columns, and a string representation of their data, providing the AI agent with a rich source of information to reference when answering questions based on the available data. The resulting context can be quite large if there are many tables or if the tables contain a lot of data, 
+                                        # so it may be necessary to consider ways to summarize or limit the amount of data included in the context for larger datasets to ensure that it remains manageable for the LLM to process effectively.
 
 
 
 
 
 
-
+# AIAgent class is responsible for using the Ollama LLM to answer questions about the e-commerce data.
+# # It initializes with a DataQueryEngine to access the data and configures the Ollama LLM for generating responses. 
+# The agent provides a method to answer questions by building a prompt that includes the data context and schema information, 
+# and then invoking the LLM to generate a response based on that prompt. 
+# If the LLM is not available or encounters an error, 
+# it falls back to providing raw data or schema information as a response. 
+# This allows the AI agent to still provide useful information even if the LLM is not functioning properly, ensuring that users can get insights from their data regardless of the status of the LLM. 
+# The agent is designed to be interactive, allowing users to ask questions in natural language and receive answers based on their e-commerce data, 
+#  making it a powerful tool for data analysis and insights generation without needing to write complex SQL queries directly.                                         
 class AIAgent:
-    """AI Agent that uses Ollama to answer questions about e-commerce data."""
+    """
+    AI Agent that uses Ollama to answer questions about e-commerce data.
+        - Initializes with a DataQueryEngine to access the data.
+        - Configures the Ollama LLM for generating responses.
+        - Provides a method to answer questions by building a prompt that includes the data context and schema information, and then invoking the LLM to generate a response based on that prompt. 
+        - If the LLM is not available or encounters an error, it falls back to providing raw data or schema information as a response. This allows the AI agent to still provide useful information even if the LLM is not functioning properly, ensuring that users can get insights from their data regardless of the status of the LLM. 
+        - The agent is designed to be interactive, allowing users to ask questions in natural language and receive answers based on their e-commerce data, making it a powerful tool for data analysis and insights generation without needing to write complex SQL queries directly.
     
-    def __init__(self, query_engine: DataQueryEngine):
-        self.query_engine = query_engine
-        self.llm = None
-        self._init_llm()
+    """
+    
+    def __init__(self, query_engine: DataQueryEngine): 
+        self.query_engine = query_engine # Store the provided DataQueryEngine instance in the agent for accessing the data when answering questions. This allows the agent to query the data and include relevant information in the prompts sent to the LLM, enabling it to generate informed responses based on the available data.
+        self.llm = None # Initialize the LLM attribute to None, which will later be set to an instance of the OllamaLLM if it is successfully configured. This allows us to check if the LLM is available before attempting to invoke it for generating responses, and to provide fallback responses if the LLM is not configured properly or encounters errors.
+        self._init_llm() # Call the method to initialize the Ollama LLM when the agent is created. This will attempt to set up the LLM and print the status of the configuration, allowing us to know if the LLM is ready to use for answering questions or if we need to rely on fallback responses based on the data context and schema information.
     
     def _init_llm(self):
-        """Initialize the Ollama LLM."""
+        """
+        Initialize the Ollama LLM.
+
+            - Attempts to create an instance of the OllamaLLM with the specified model and base URL.
+            - If successful, it prints a confirmation message indicating that Ollama is configured.
+            - If there is an error during initialization (e.g., Ollama server not running, incorrect model name, connection issues), 
+            it catches the exception and prints an error message with details about the failure. 
+            It also provides a reminder to ensure that the Ollama server is running (e.g., "ollama serve") to help users troubleshoot common issues with LLM configuration. 
+            If the initialization fails the LLM attribute will remain None, allowing the agent to fall back to providing raw data or schema information when answering questions instead of generating responses from the LLM. 
+            This ensures that the agent can still provide useful insights based on the data even if the LLM is not available.         
+
+
+        """
         try:
             self.llm = OllamaLLM(
                 model=OLLAMA_MODEL,
                 base_url=OLLAMA_BASE_URL,
                 temperature=0.1
-            )
+            ) # Attempt to create an instance of the OllamaLLM with the specified model, base URL, and temperature settings. If this is successful, it means that the LLM is properly configured and ready to use for generating responses to user questions based on the e-commerce data.      
             print(f"✓ Configured Ollama ({OLLAMA_MODEL})")
-        except Exception as e:
+        except Exception as e: 
             print(f"✗ Failed to configure Ollama: {e}")
             print("  Make sure Ollama is running: ollama serve")
             self.llm = None
     
+
+
+    # answer_question is the main method that takes a user's question as input and generates an answer based on the e-commerce data.
+    # It first retrieves the data context and schema information from the DataQueryEngine, then builds a prompt that includes this information along with the user's question. 
+    # The prompt is designed to instruct the LLM to provide a clear and concise answer based on the data, including specific numbers and insights. 
+    # If the LLM is available, it invokes the LLM with the prompt and returns the generated response. 
+    # If there is an error during LLM invocation, it catches the exception and returns an error message along with a fallback response that includes the table schemas.             
     def answer_question(self, question: str) -> str:
-        """Answer a question about the e-commerce data."""
+        """
+        Answer a question about the e-commerce data.
+
+        - Retrieves the data context and schema information from the DataQueryEngine.
+        - Builds a prompt that includes the data context, schema information, and the user's question.
+        - The prompt instructs the LLM to provide a clear and concise answer based on the data, including specific numbers and insights. 
+          If the data is insufficient, it instructs the LLM to say so clearly.
+
+        - If the LLM is available, it invokes the LLM with the prompt and returns the generated response. 
+        - If there is an error during LLM invocation, it catches the exception and returns an error message along with a fallback response 
+          that includes the table schemas. This allows the agent to still provide useful information based on the data even if the LLM encounters issues, 
+          ensuring that users can get insights from their e-commerce data regardless of the status of the LLM. 
+
+        - If the LLM is not available at all, it returns a message indicating that the LLM is not available and provides the raw data context as a fallback response, 
+          allowing users to still see the data that the agent has access to even 
+          if it cannot generate a response using the LLM. This ensures that the agent can still be useful for data exploration and insights generation 
+          even in the absence of a functioning LLM, providing users with direct access to the data context and schema information that the agent uses to answer questions.          
+        
+        
+        """
         
         # Get data context
-        data_context = self.query_engine.get_data_context()
-        schema_info = self.query_engine.get_table_schemas()
+        data_context = self.query_engine.get_data_context() # Retrieve the data context from the DataQueryEngine, which provides a summary of all loaded data including table names, columns, and a string representation of the data. This context will be included in the prompt sent to the LLM to give it the necessary information about the available data when generating a response to the user's question. The data context can be quite comprehensive, providing insights into the structure and contents of each table that the agent has access to, allowing the LLM to reference specific tables and values when formulating its answer.
+        schema_info = self.query_engine.get_table_schemas() # Retrieve the schema information for all loaded tables from the DataQueryEngine, which provides details about the columns, data types, and row counts for each table. This schema information will be included in the prompt sent to the LLM to give it a clear understanding of the structure of the data it can reference when answering the user's question. By including both the data context and schema information in the prompt, we enable the LLM to generate more informed and accurate responses based on the available e-commerce data, allowing it to provide specific insights and numbers as needed to answer the user's question effectively.
         
         # Build prompt
         prompt = f"""You are an AI data analyst for an e-commerce platform.
 Answer the user's question based on the data provided below.
 
-AVAILABLE TABLES:
+AVAILABLE TABLES: 
 {schema_info}
 
 CURRENT DATA:
@@ -368,12 +455,19 @@ Provide a clear, concise answer based on the data above. Include specific number
 If the data is insufficient, say so clearly.
 
 ANSWER:"""
+        
 
-        if self.llm:
+# If the LLM is available, we will attempt to invoke it with the constructed prompt to generate a response to the user's question based on the e-commerce data. 
+# This allows us to leverage the capabilities of the LLM to provide a more natural and informative answer that references specific insights from the data. 
+# If there is an error during LLM invocation, we will catch the exception and return an error message along with a fallback response that includes the table schemas, ensuring that users can still get useful information about the available data even if the LLM encounters issues. 
+# If the LLM is not available at all, we will return a message indicating that the LLM is not available and provide the raw data context as a fallback response, allowing users to still see the data that the agent has access to even if it cannot generate a response using the LLM. 
+# This ensures that the agent can still be useful for data exploration and insights generation even in the absence of a functioning LLM, providing users with direct access to the data context and schema information that the agent uses to answer questions.
+
+        if self.llm:  
             try:
                 print("  🤔 Thinking...")
-                response = self.llm.invoke(prompt)
-                return response.strip()
+                response = self.llm.invoke(prompt) # Invoke the LLM with the constructed prompt to generate a response based on the e-commerce data and the user's question. This allows us to leverage the LLM's capabilities to provide a more natural and informative answer that references specific insights from the data. If the invocation is successful, we will return the generated response as the answer to the user's question.
+                return response.strip() # Return the generated response from the LLM, stripping any leading or trailing whitespace for cleaner output. This will be the answer to the user's question based on the e-commerce data and the information provided in the prompt. If the LLM is able to generate a response successfully, it should provide insights and specific numbers based on the data context and schema information included in the prompt.
             except Exception as e:
                 return f"LLM Error: {str(e)}\n\nFalling back to data display:\n{self.query_engine.get_table_schemas()}"
         else:
