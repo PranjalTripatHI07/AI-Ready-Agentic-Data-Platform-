@@ -122,6 +122,11 @@ def load_features():
         raise # Re-raise the exception after logging the error message
 
 
+
+
+# This function prepares the data for training by splitting the features and target variable. 
+# It also handles missing values and infinity in the feature data, and prints the class distribution of the target variable to provide insight into potential class imbalance issues.
+# The function returns the feature matrix (X), target vector (y), and the list of available feature names that were used for training.
 def prepare_data(df):
     """
     Prepare data for training - split features and target.
@@ -129,23 +134,24 @@ def prepare_data(df):
     print("\nPreparing data for training...")
     
     # Select only feature columns that exist
-    available_features = [col for col in FEATURE_COLUMNS if col in df.columns]
+    available_features = [col for col in FEATURE_COLUMNS if col in df.columns] # Create a list of feature columns that are present in the DataFrame, ensuring that we only use features that are available for training
     
-    if len(available_features) < len(FEATURE_COLUMNS):
-        missing = set(FEATURE_COLUMNS) - set(available_features)
-        print(f"  Warning: Missing features: {missing}")
+    if len(available_features) < len(FEATURE_COLUMNS): # Check if any expected feature columns are missing from the DataFrame by comparing the length of the available features with the length of the expected feature columns
+        missing = set(FEATURE_COLUMNS) - set(available_features) # Identify any expected feature columns that are missing from the DataFrame by comparing the list of expected feature columns with the list of available feature columns
+        print(f"  Warning: Missing features: {missing}") # Print a warning message if any of the expected feature columns are missing from the DataFrame, which could impact model performance
     
     print(f"  Using {len(available_features)} features")
     
     # Extract features and target
-    X = df[available_features].copy()
-    y = df[TARGET_COLUMN].copy()
+    X = df[available_features].copy() # Create a feature matrix (X) by selecting the available feature columns from the DataFrame and making a copy to avoid modifying the original DataFrame
+    y = df[TARGET_COLUMN].copy() # Create a target vector (y) by selecting the target column from the DataFrame and making a copy to avoid modifying the original DataFrame
     
     # Handle missing values and infinity
     import numpy as np
-    X = X.replace([np.inf, -np.inf], np.nan)
-    X = X.fillna(0)
-    
+    X = X.replace([np.inf, -np.inf], np.nan) # Replace any infinite values in the feature matrix (X) with NaN to handle cases where features may have infinite values due to division by zero or other issues
+    X = X.fillna(0) # Fill any missing values (NaN) in the feature matrix (X) with 0, which is a common strategy for handling missing data in machine learning pipelines. 
+                    # This ensures that the model can be trained without errors due to missing values
+     
     # Print class distribution
     print(f"\nClass distribution:")
     print(f"  Non-purchasers (0): {(y == 0).sum()} ({(y == 0).mean()*100:.1f}%)")
@@ -154,6 +160,10 @@ def prepare_data(df):
     return X, y, available_features
 
 
+
+# This function trains a logistic regression model using the prepared feature matrix (X) and target vector (y). 
+# It performs a train/test split to evaluate the model's performance on unseen data, scales the features using StandardScaler, and handles class imbalance by setting class_weight to 'balanced' in the logistic regression model. 
+# The function returns the trained model, the scaler used for feature scaling, the scaled training and testing feature matrices, and the corresponding target vectors for training and testing.
 def train_model(X, y):
     """
     Train logistic regression model with train/test split.
@@ -163,33 +173,41 @@ def train_model(X, y):
     # Split data
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y if len(y.unique()) > 1 else None
-    )
+    ) # Split the feature matrix (X) and target vector (y) into training and testing sets using an 80/20 split. 
+       # The random_state parameter is set to 42 for reproducibility, ensuring that the same 
+         # split is generated each time the code is run.
     
-    print(f"  Training samples: {len(X_train)}")
+    print(f"  Training samples: {len(X_train)}") 
     print(f"  Test samples: {len(X_test)}")
     
     # Scale features
-    scaler = StandardScaler()
-    X_train_scaled = scaler.fit_transform(X_train)
-    X_test_scaled = scaler.transform(X_test)
+    scaler = StandardScaler() # Create an instance of StandardScaler, which will be used to standardize the feature data by removing the mean and scaling to unit variance.
+    X_train_scaled = scaler.fit_transform(X_train) # Fit the scaler to the training feature matrix (X_train) and transform it to create a scaled version of the training features (X_train_scaled).
+    X_test_scaled = scaler.transform(X_test)  # Use the fitted scaler to transform the testing feature matrix (X_test) to create a scaled version of the testing features (X_test_scaled).
     
     # Train logistic regression
     model = LogisticRegression(
-        max_iter=1000,
-        random_state=42,
+        max_iter=1000, # Set a higher maximum number of iterations to ensure convergence, especially if the dataset is large or has many features.
+        random_state=42, # Set random_state for reproducibility, ensuring that the same model parameters are generated each time the code is run.
         class_weight='balanced',  # Handle class imbalance
-        solver='lbfgs'
+        solver='lbfgs' # Use the 'lbfgs' solver, which is an optimization algorithm that is efficient for logistic regression and can handle L2 regularization.
     )
     
-    model.fit(X_train_scaled, y_train)
+    model.fit(X_train_scaled, y_train) # Fit the logistic regression model to the scaled training feature matrix (X_train_scaled) and the corresponding target vector (y_train).
     print("✓ Model trained")
     
     return model, scaler, X_train_scaled, X_test_scaled, y_train, y_test
 
 
+
+
+
+# This function evaluates the performance of the trained logistic regression model on the testing data. 
+# It calculates various performance metrics such as accuracy, precision, recall, F1 score, and ROC AUC, and also generates a confusion matrix to visualize the true positives, true negatives, false positives, and false negatives. 
+# Additionally, it extracts feature importance from the model coefficients and prints the top 5 most important features. The function returns a dictionary containing all the calculated metrics, the confusion matrix, and the feature importance for further analysis or saving to disk.
 def evaluate_model(model, X_test, y_test, feature_names):
     """
-    Evaluate model performance and return metrics.
+    Evaluate model performance and return metrics.    
     """
     print("\nEvaluating model...")
     
