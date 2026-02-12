@@ -212,28 +212,28 @@ def evaluate_model(model, X_test, y_test, feature_names):
     print("\nEvaluating model...")
     
     # Predictions
-    y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)[:, 1] if len(model.classes_) > 1 else model.predict_proba(X_test)[:, 0]
+    y_pred = model.predict(X_test) # Use the trained logistic regression model to make predictions on the scaled testing feature matrix (X_test) and store the predicted class labels in y_pred.
+    y_pred_proba = model.predict_proba(X_test)[:, 1] if len(model.classes_) > 1 else model.predict_proba(X_test)[:, 0] # Get predicted probabilities for the positive class (class 1) if there are multiple classes, otherwise get probabilities for the single class. This is used for calculating ROC AUC.
     
     # Calculate metrics
     metrics = {
-        "accuracy": float(accuracy_score(y_test, y_pred)),
-        "precision": float(precision_score(y_test, y_pred, zero_division=0)),
-        "recall": float(recall_score(y_test, y_pred, zero_division=0)),
-        "f1_score": float(f1_score(y_test, y_pred, zero_division=0)),
-        "roc_auc": float(roc_auc_score(y_test, y_pred_proba)) if len(np.unique(y_test)) > 1 else 0.0,
-        "training_date": datetime.now().isoformat(),
-        "n_samples": int(len(y_test)),
-        "n_features": int(len(feature_names))
+        "accuracy": float(accuracy_score(y_test, y_pred)), # Calculate the accuracy of the model by comparing the true labels (y_test) with the predicted labels (y_pred) and convert it to a float for easier storage in JSON format.
+        "precision": float(precision_score(y_test, y_pred, zero_division=0)), # Calculate the precision of the model, which is the proportion of true positive predictions out of all positive predictions made by the model. The zero_division=0 parameter ensures that if there are no positive predictions, the precision will be set to 0 instead of raising an error.
+        "recall": float(recall_score(y_test, y_pred, zero_division=0)), # Calculate the recall of the model, which is the proportion of true positive predictions out of all actual positive cases in the dataset. The zero_division=0 parameter ensures that if there are no actual positive cases, the recall will be set to 0 instead of raising an error.
+        "f1_score": float(f1_score(y_test, y_pred, zero_division=0)), # Calculate the F1 score of the model, which is the harmonic mean of precision and recall. The zero_division=0 parameter ensures that if there are no positive predictions or actual positive cases, the F1 score will be set to 0 instead of raising an error.
+        "roc_auc": float(roc_auc_score(y_test, y_pred_proba)) if len(np.unique(y_test)) > 1 else 0.0, # Calculate the ROC AUC score of the model using the true labels (y_test) and the predicted probabilities (y_pred_proba). If there is only one class in y_test, set ROC AUC to 0.0 since it cannot be calculated.
+        "training_date": datetime.now().isoformat(), # Add a timestamp for when the model was trained, formatted as an ISO 8601 string for easy storage and readability.
+        "n_samples": int(len(y_test)),  # Include the number of samples in the test set to provide context for the performance metrics, which can help in understanding the reliability of the results.
+        "n_features": int(len(feature_names)) # Include the number of features used in the model to provide context for the performance metrics, which can help in understanding the complexity of the model and its potential for overfitting or underfitting.
     }
     
     # Confusion matrix
-    cm = confusion_matrix(y_test, y_pred)
-    metrics["confusion_matrix"] = cm.tolist()
+    cm = confusion_matrix(y_test, y_pred) # Generate a confusion matrix to visualize the performance of the model in terms of true positives, true negatives, false positives, and false negatives by comparing the true labels (y_test) with the predicted labels (y_pred). The confusion matrix is stored as a list in the metrics dictionary for easy storage in JSON format.
+    metrics["confusion_matrix"] = cm.tolist() # Convert the confusion matrix to a list format for JSON serialization, as numpy arrays cannot be directly serialized to JSON.
     
     # Feature importance (coefficients)
-    feature_importance = dict(zip(feature_names, model.coef_[0].tolist()))
-    metrics["feature_importance"] = feature_importance
+    feature_importance = dict(zip(feature_names, model.coef_[0].tolist())) # Extract feature importance from the logistic regression model coefficients by creating a dictionary that maps each feature name to its corresponding coefficient value. The coefficients indicate the strength and direction of the relationship between each feature and the target variable, with higher absolute values indicating more important features for predicting the target variable. This information is stored in the metrics dictionary for further analysis or saving to disk.
+    metrics["feature_importance"] = feature_importance # Add the feature importance dictionary to the metrics dictionary for easy storage in JSON format, allowing for analysis of which features are most influential in the model's predictions.
     
     # Print results
     print("\n" + "=" * 60)
@@ -258,9 +258,13 @@ def evaluate_model(model, X_test, y_test, feature_names):
     return metrics
 
 
-def save_artifacts(model, scaler, metrics, feature_names):
+
+# This function saves the trained model, the scaler used for feature scaling, and the performance metrics to disk. 
+# The model and scaler are saved as pickle files for easy loading in future inference or retraining, while the metrics are saved in JSON format for easy analysis and tracking of model performance over time.
+def save_artifacts(model, scaler, metrics, feature_names): # The function takes the trained model, the scaler used for feature scaling, the performance metrics, and the list of feature names as input parameters to save them to disk.
     """
     Save model, scaler, and metrics to disk.
+
     """
     print(f"\nSaving artifacts to: {MODEL_PATH}")
     
@@ -284,6 +288,8 @@ def save_artifacts(model, scaler, metrics, feature_names):
     print(f"  ✓ Metrics saved: {METRICS_FILE}")
 
 
+
+# This main function orchestrates the entire machine learning training pipeline by calling the individual functions for loading features, preparing data, training the model, evaluating performance, and saving artifacts.
 def main():
     """
     Main function to run the ML training pipeline.
