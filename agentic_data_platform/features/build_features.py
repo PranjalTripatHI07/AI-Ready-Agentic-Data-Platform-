@@ -289,9 +289,29 @@ def calculate_conversion_features(df, spark: SparkSession):
     return conversion_features
 
 
+
+
+
+
+
+# This Function combines all feature sets (purchase, event frequency, conversion) into a single feature table.
+# It also creates a binary target variable "is_purchaser" based on whether the user has made any purchases.
+# The combined feature table includes all relevant features and metadata for each user, ready for model training.
+# The function also handles users who may not have purchase data by filling nulls with zeros, ensuring that all users are included in the final feature set.
+# Finally, it adds a timestamp to indicate when the features were generated.
+# Think of it like: We have different pieces of information about users (their purchases, how often they interact, and how well they convert).
+# We want to bring all that information together into one big table that we can use to train our model to predict who is likely to make a purchase.
 def combine_features(purchase_features, event_features, conversion_features):
     """
     Combine all feature sets into a single feature table.
+    - Join purchase, event frequency, and conversion features on user_id
+    - Fill nulls for users without purchases
+    - Create target variable: is_purchaser (1 if total_purchases > 0
+        else 0)
+         - Add feature timestamp
+         - Select final feature columns
+         - Return combined feature DataFrame
+
     """
     print("\nCombining all features...")
     
@@ -348,9 +368,15 @@ def combine_features(purchase_features, event_features, conversion_features):
     return final_features
 
 
+
+# This Function writes the final feature table to a Delta Lake location specified by output_path.
 def write_features(df, output_path: str):
     """
     Write feature table to Delta Lake.
+    - Write the final feature DataFrame to the specified output path in Delta format.
+        - Use overwrite mode to replace existing data
+        - Enable overwriteSchema to allow schema changes
+        - Print the number of records written for verification
     """
     print(f"\nWriting features to: {output_path}")
     
@@ -360,10 +386,13 @@ def write_features(df, output_path: str):
         .option("overwriteSchema", "true") \
         .save(output_path)
     
-    record_count = df.count()
-    print(f"✓ Wrote {record_count} user feature records")
+    record_count = df.count() # Count the number of records in the DataFrame to confirm how many feature records were written to the Delta Lake.
+    print(f"✓ Wrote {record_count} user feature records") 
 
 
+
+
+# Main function to run the feature engineering pipeline.
 def main():
     """
     Main function to run the feature engineering pipeline.
