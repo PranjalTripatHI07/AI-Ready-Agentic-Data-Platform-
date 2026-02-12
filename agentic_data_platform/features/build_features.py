@@ -133,12 +133,20 @@ def calculate_purchase_features(df, spark: SparkSession):
     print("\nCalculating purchase features...")
     
     # Get current timestamp for 24h window calculation
-    current_ts = current_timestamp()
+    # Get the current timestamp to calculate features based on recent activity 
+    # (e.g., purchases in the last 24 hours).
+    current_ts = current_timestamp() 
     
     # Filter for purchase events
     purchases_df = df.filter(col("event_type") == "purchase")
     
     # Calculate purchase features per user
+    # Group by user_id and aggregate purchase-related metrics, including:
+    # - purchases in the last 24 hours
+    # - total purchases
+    # - total revenue
+    # - average order value
+    # - maximum and minimum purchase values
     purchase_features = purchases_df \
         .groupBy("user_id") \
         .agg(
@@ -150,7 +158,7 @@ def calculate_purchase_features(df, spark: SparkSession):
                 )
             ).alias("purchases_last_24h"),
             # Total purchases
-            count("*").alias("total_purchases"),
+            count("*").alias("total_purchases"), # It counts all rows in the group, which corresponds to the total number of purchase events for each user.
             # Total revenue
             spark_round(spark_sum("price"), 2).alias("total_revenue"),
             # Average order value
