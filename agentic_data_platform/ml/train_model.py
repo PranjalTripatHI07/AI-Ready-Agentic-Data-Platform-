@@ -98,22 +98,21 @@ def load_features():
     
     """
     print(f"Loading features from: {FEATURES_PATH}")
-    
+
     try:
-        # Try to read as parquet (Delta Lake stores as parquet internally)
-        import glob # Used for finding all parquet files in the specified directory
-        parquet_files = glob.glob(f"{FEATURES_PATH}/*.parquet") # Get a list of all parquet files in the features directory
-        
-        if parquet_files:
-            df = pd.concat([pd.read_parquet(f) for f in parquet_files], ignore_index=True) # Read each parquet file into a DataFrame and concatenate them into a single DataFrame
-        else:
-            # Try with delta-rs if available
-            try:
-                from deltalake import DeltaTable
-                dt = DeltaTable(FEATURES_PATH)
-                df = dt.to_pandas() # Convert the DeltaTable to a pandas DataFrame
-            except ImportError:
-                raise FileNotFoundError(f"No parquet files found in {FEATURES_PATH}") # Raise an error if no parquet files are found and delta-rs is not available
+        # Prefer delta-rs to read only active Delta files (avoids stale parquet)
+        try:
+            from deltalake import DeltaTable
+            dt = DeltaTable(FEATURES_PATH)
+            df = dt.to_pandas()
+        except Exception:
+            # Fallback: read parquet files directly
+            import glob
+            parquet_files = glob.glob(f"{FEATURES_PATH}/*.parquet")
+            if parquet_files:
+                df = pd.concat([pd.read_parquet(f) for f in parquet_files], ignore_index=True)
+            else:
+                raise FileNotFoundError(f"No parquet files found in {FEATURES_PATH}")
         
         print(f"✓ Loaded {len(df)} records")
         return df

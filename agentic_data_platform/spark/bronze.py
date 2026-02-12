@@ -5,6 +5,10 @@ Reads streaming data from Kafka and writes raw data to Delta Lake.
 NO filtering, NO cleaning - stores everything as-it is.
 """
 
+import os
+# Ensure compatible Java version for Spark
+if os.path.isdir("/usr/lib/jvm/java-17-openjdk-amd64"):
+    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
 
 # # SparkSession is the entry point to Spark.
 # It starts the Spark engine and lets us read, process, and write data using DataFrames.
@@ -44,7 +48,6 @@ KAFKA_TOPIC = "ecommerce_events"
 
 
 # Here we are defining the paths for bronze data storage and Spark checkpointing
-import os # importing os module To handle file paths
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
 BRONZE_PATH = os.path.join(BASE_PATH, "data/bronze/ecommerce_events") # Path to store raw bronze data
 CHECKPOINT_PATH = os.path.join(BASE_PATH, "data/checkpoints/bronze") # Path for Spark checkpointing

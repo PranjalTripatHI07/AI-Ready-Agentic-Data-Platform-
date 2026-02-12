@@ -6,6 +6,11 @@ Reads Bronze Delta table, applies data quality rules, and writes cleaned data.
 FAILS on invalid data - strict validation enforced.
 """
 
+import os
+# Ensure compatible Java version for Spark
+if os.path.isdir("/usr/lib/jvm/java-17-openjdk-amd64"):
+    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
+
 
 
 
@@ -43,7 +48,6 @@ import sys
 # BASE_PATH is the root directory of our project, and we build the other paths relative to it.
 # This way, we can easily manage our data and checkpoints without hardcoding absolute paths.
 # The checkpoint path is important for Spark streaming jobs, but we include it here for future-proofing in case we want to convert this batch job to a streaming job later on.
-import os
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
 BRONZE_PATH = os.path.join(BASE_PATH, "data/bronze/ecommerce_events") # Path to store raw bronze data
 SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to store cleaned silver data

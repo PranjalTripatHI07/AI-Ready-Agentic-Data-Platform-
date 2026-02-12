@@ -1,5 +1,3 @@
-version: '3.8' # "I'm using Docker Compose version 3.8 syntax"
-
 services:
   # Zookeeper - Required for Kafka coordination
   zookeeper:   # zookeeper:- The "manager" that keeps Kafka organized

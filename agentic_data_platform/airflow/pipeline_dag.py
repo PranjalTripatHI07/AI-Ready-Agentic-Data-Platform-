@@ -87,10 +87,11 @@ with DAG(
         import os
         import glob
         
+        project_path = "/opt/airflow/dags/agentic_data_platform"
         gold_paths = [
-            "/data/gold/revenue_per_hour",
-            "/data/gold/active_users_per_hour",
-            "/data/gold/conversion_rate"
+            f"{project_path}/data/gold/revenue_per_hour",
+            f"{project_path}/data/gold/active_users_per_hour",
+            f"{project_path}/data/gold/conversion_rate"
         ]
         
         for path in gold_paths:
@@ -153,7 +154,8 @@ with DAG(
         """Validate feature table exists and has data."""
         import glob
         
-        features_path = "/data/features/user_features"
+        project_path = "/opt/airflow/dags/agentic_data_platform"
+        features_path = f"{project_path}/data/features/user_features"
         parquet_files = glob.glob(f"{features_path}/*.parquet")
         
         if not parquet_files:
@@ -194,7 +196,8 @@ with DAG(
         import glob
         import pandas as pd
         
-        features_path = "/data/features/user_features"
+        project_path = "/opt/airflow/dags/agentic_data_platform"
+        features_path = f"{project_path}/data/features/user_features"
         parquet_files = glob.glob(f"{features_path}/*.parquet")
         
         if not parquet_files:
@@ -232,7 +235,8 @@ with DAG(
         import json
         import os
         
-        metrics_file = "/data/models/metrics.json"
+        project_path = "/opt/airflow/dags/agentic_data_platform"
+        metrics_file = f"{project_path}/data/models/metrics.json"
         
         if not os.path.exists(metrics_file):
             raise ValueError("Model metrics file not found")

@@ -8,6 +8,11 @@ Outputs:
   - Conversion rate
 """
 
+import os
+# Ensure compatible Java version for Spark
+if os.path.isdir("/usr/lib/jvm/java-17-openjdk-amd64"):
+    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
+
 
 
 # Import SparkSession to create a Spark session for processing data.
@@ -43,9 +48,8 @@ import sys
 
 # Configuration
 
-# Define file paths for Silver input and Gold output. 
+# Define file paths for Silver input and Gold output.
 # These paths are constructed based on the directory structure of the project.
-import os
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
 SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to the Silver Delta table
 GOLD_PATH = os.path.join(BASE_PATH, "data/gold") # Define the path for the Gold layer output

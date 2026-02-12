@@ -8,6 +8,11 @@ Features:
   - Event frequency (per user)
 """
 
+import os
+# Ensure compatible Java version for Spark
+if os.path.isdir("/usr/lib/jvm/java-17-openjdk-amd64"):
+    os.environ["JAVA_HOME"] = "/usr/lib/jvm/java-17-openjdk-amd64"
+
 
 
 
@@ -59,7 +64,6 @@ from datetime import datetime, timedelta
 # Define paths for Silver data and output features. 
 # These paths are constructed based on the directory structure of the project, 
 # allowing for easy access to the necessary data and storage of the generated features.
-import os
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
 SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to the Silver Delta table containing raw event data
 FEATURES_PATH = os.path.join(BASE_PATH, "data/features/user_features") # Path where the generated features will be stored as a Delta table
