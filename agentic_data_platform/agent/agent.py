@@ -551,7 +551,7 @@ def main(): # Define the main function as the entry point of the program. This f
           including initializing the DataQueryEngine and AIAgent, prompting the user for input, and processing that input accordingly. By structuring the program this way, we can maintain a clear separation of concerns and keep our code organized and easy to understand.          
     
     """
-    run_interactive_session()
+    run_interactive_session() # Call the function to run the interactive session, which will start the program and allow users to ask questions about their e-commerce data in natural language, as well as execute direct SQL queries if they choose to do so. This is the main functionality of the program, providing an interactive interface for users to explore their data and get insights based on their questions.
 
 
 if __name__ == "__main__":
