@@ -474,8 +474,23 @@ ANSWER:"""
             return f"LLM not available. Here's the raw data:\n{data_context}"
 
 
+
+# run_interactive_session is a function that runs an interactive question-answering session with the user.
+# It initializes the DataQueryEngine and AIAgent, then enters a loop where it prompts the user to ask questions about their e-commerce data in natural language. 
+# The user can also enter direct SQL queries by prefixing their input with "sql ". The function handles user input, processes it accordingly (either as a direct SQL query or as a natural language question), and prints the results. 
+# The session continues until the user types "quit", "exit", or "q".        
 def run_interactive_session():
-    """Run an interactive question-answering session."""
+    """
+    Run an interactive question-answering session.
+
+        - Initializes the DataQueryEngine and AIAgent.
+        - Prompts the user to ask questions about their e-commerce data in natural language.
+        - The user can also enter direct SQL queries by prefixing their input with "sql ".
+        - Handles user input, processes it accordingly (either as a direct SQL query or as a natural language question), and prints the results.
+        - The session continues until the user types "quit", "exit", or "q".    
+    
+    
+    """
     print("=" * 60)
     print("🤖 E-commerce AI Data Agent")
     print("=" * 60)
@@ -484,8 +499,8 @@ def run_interactive_session():
     print("=" * 60)
     
     # Initialize
-    query_engine = DataQueryEngine()
-    agent = AIAgent(query_engine)
+    query_engine = DataQueryEngine() # Create an instance of the DataQueryEngine, which will be responsible for loading the e-commerce data and providing methods to query that data. This engine will allow us to access the data in a structured way and provide the necessary context and schema information to the AI agent when answering questions.
+    agent = AIAgent(query_engine) # Create an instance of the AIAgent, passing in the DataQueryEngine instance. The agent will use the query engine to access the data and generate responses to user questions based on that data. This allows us to have a modular design where the agent is responsible for interacting with the LLM and generating answers, while the query engine is responsible for managing the data and providing access to it when needed.
     
     print("\n📝 Example questions:")
     print("  • What is the total revenue?")
@@ -494,7 +509,7 @@ def run_interactive_session():
     print("  • sql SELECT * FROM revenue_per_hour")
     print()
     
-    while True:
+    while True: # Start an infinite loop to continuously prompt the user for input until they choose to exit. This allows for an interactive session where users can ask multiple questions about their e-commerce data without needing to restart the program.
         try:
             question = input("\n🤖 Ask a question: ").strip()
             
@@ -508,26 +523,34 @@ def run_interactive_session():
             print("\n" + "-" * 50)
             
             # Handle direct SQL queries
-            if question.lower().startswith("sql "):
-                sql_query = question[4:].strip()
-                result = query_engine.execute_query(sql_query)
-                print(f"\n📊 SQL Result:\n{result}")
-            elif question.lower() in ['describe', 'show tables', 'schema']:
-                print(f"\n📊 Available Tables:\n{query_engine.get_table_schemas()}")
+            if question.lower().startswith("sql "): # If the user's input starts with "sql ", we will treat it as a direct SQL query that they want to execute against the data. This allows users who are familiar with SQL to run specific queries directly without needing to phrase their question in natural language, giving them more control over the data they want to retrieve or analyze.
+                sql_query = question[4:].strip() # Extract the SQL query from the user's input by removing the "sql " prefix and stripping any leading or trailing whitespace. This gives us the actual SQL query that the user wants to execute against the data.
+                result = query_engine.execute_query(sql_query) # Use the DataQueryEngine's execute_query method to run the extracted SQL query against the loaded data. This method will attempt to parse and execute the SQL query, returning the results as a string. If the query is valid and can be executed successfully, it will return the results of that query based on the data available in the DataQueryEngine. If there are any errors during query execution (e.g., syntax errors, referencing non-existent tables or columns), it will return an error message indicating what went wrong with the query.
+                print(f"\n📊 SQL Result:\n{result}") 
+            elif question.lower() in ['describe', 'show tables', 'schema']: # If the user's input is a command to show the schema or available tables (e.g., "describe", "show tables", "schema"), we will respond by providing the table schemas from the DataQueryEngine. This allows users to quickly see what tables are available and their structure, which can help them formulate their questions or SQL queries more effectively based on the data they have access to.
+                print(f"\n📊 Available Tables:\n{query_engine.get_table_schemas()}") 
             else:
                 # Use AI to answer
-                answer = agent.answer_question(question)
-                print(f"\n📊 Answer:\n{answer}")
+                answer = agent.answer_question(question) # If the user's input is not a direct SQL query or a command to show the schema, we will treat it as a natural language question that they want the AI agent to answer based on the e-commerce data. We will pass the question to the agent's answer_question method, which will build a prompt that includes the data context and schema information, and then invoke the LLM to generate a response based on that prompt. The generated response will be returned as the answer to the user's question, providing insights and specific numbers based on the data available in the DataQueryEngine. 
+                                                         # If there are any issues with the LLM (e.g., it is not available, or there is an error during invocation), the agent will provide fallback responses based on the data context and schema information to ensure that users can still get useful insights from their data even if the LLM encounters problems.
+                print(f"\n📊 Answer:\n{answer}") 
                 
-        except KeyboardInterrupt:
+        except KeyboardInterrupt: # If the user sends a keyboard interrupt signal (e.g., by pressing Ctrl+C), we will catch that exception and print a goodbye message before breaking out of the loop to end the interactive session gracefully. This allows users to exit the session at any time using a common keyboard shortcut, providing a convenient way to end their interaction with the AI agent when they are finished asking questions about their e-commerce data.
             print("\n\n👋 Goodbye!")
             break
-        except Exception as e:
+        except Exception as e: # If there are any other exceptions that occur during the processing of user input (e.g., issues with the DataQueryEngine, unexpected errors in the agent's methods), we will catch those exceptions and print an error message with details about what went wrong. This helps to provide feedback to the user if something goes wrong during their interaction with the AI agent, allowing them to understand that an error occurred and potentially take corrective action or try a different question. By catching general exceptions, we can ensure that the interactive session continues even if there are issues, rather than crashing the program, providing a more robust user experience.
             print(f"❌ Error: {e}")
 
 
-def main():
-    """Main entry point."""
+def main(): # Define the main function as the entry point of the program. This function will call the run_interactive_session function to start the interactive question-answering session with the user. By defining a main function, we can ensure that the program's execution starts in a clear and organized way, allowing us to easily manage the flow of the program and potentially add additional setup or configuration steps in the future if needed before starting the interactive session.
+    """
+    Main entry point.
+
+        - Calls the run_interactive_session function to start the interactive question-answering session with the user. 
+          This allows us to keep the main function clean and focused on starting the program, while the run_interactive_session function handles all the details of the interactive session itself, 
+          including initializing the DataQueryEngine and AIAgent, prompting the user for input, and processing that input accordingly. By structuring the program this way, we can maintain a clear separation of concerns and keep our code organized and easy to understand.          
+    
+    """
     run_interactive_session()
 
 
