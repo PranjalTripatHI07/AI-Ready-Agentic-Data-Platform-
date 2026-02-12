@@ -231,6 +231,14 @@ def calculate_event_frequency_features(df, spark: SparkSession):
     return event_features
 
 
+
+
+
+# This Function calculates conversion-related features per user, 
+# including:-
+# view_to_cart_ratio: Cart adds / Views
+# cart_to_purchase_ratio: Purchases / Cart adds
+# overall_conversion: Purchases / Views
 def calculate_conversion_features(df, spark: SparkSession):
     """
     Calculate conversion-related features per user.
@@ -243,31 +251,31 @@ def calculate_conversion_features(df, spark: SparkSession):
     conversion_features = df \
         .groupBy("user_id") \
         .agg(
-            count(when(col("event_type") == "view", 1)).alias("views"),
-            count(when(col("event_type") == "cart", 1)).alias("carts"),
-            count(when(col("event_type") == "purchase", 1)).alias("purchases")
+            count(when(col("event_type") == "view", 1)).alias("views"), # Count the number of view events for each user and alias it as "views".
+            count(when(col("event_type") == "cart", 1)).alias("carts"), # Count the number of cart events for each user and alias it as "carts".
+            count(when(col("event_type") == "purchase", 1)).alias("purchases") # Count the number of purchase events for each user and alias it as "purchases".
         ) \
         .withColumn(
             "view_to_cart_ratio",
             spark_round(
-                when(col("views") > 0, col("carts") / col("views"))
-                .otherwise(0.0),
+                when(col("views") > 0, col("carts") / col("views")) # Calculate the ratio of cart adds to views for each user, and round to 4 decimals.
+                .otherwise(0.0), # If the number of views is zero, set the ratio to 0.0 to avoid division by zero.
                 4
             )
         ) \
         .withColumn(
             "cart_to_purchase_ratio",
             spark_round(
-                when(col("carts") > 0, col("purchases") / col("carts"))
-                .otherwise(0.0),
+                when(col("carts") > 0, col("purchases") / col("carts")) # Calculate the ratio of purchases to cart adds for each user, and round to 4 decimals.
+                .otherwise(0.0), # If the number of cart adds is zero, set the ratio to 0.0 to avoid division by zero.
                 4
             )
         ) \
         .withColumn(
             "overall_conversion",
             spark_round(
-                when(col("views") > 0, col("purchases") / col("views"))
-                .otherwise(0.0),
+                when(col("views") > 0, col("purchases") / col("views")) # Calculate the overall conversion rate (purchases to views) for each user, and round to 4 decimals.
+                .otherwise(0.0), # If the number of views is zero, set the overall conversion to 0.0 to avoid division by zero.
                 4
             )
         ) \
@@ -276,7 +284,7 @@ def calculate_conversion_features(df, spark: SparkSession):
             "view_to_cart_ratio",
             "cart_to_purchase_ratio",
             "overall_conversion"
-        )
+        ) # Select only the relevant columns for conversion features to be used in the final feature set.
     
     return conversion_features
 
