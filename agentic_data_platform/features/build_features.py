@@ -8,21 +8,61 @@ Features:
   - Event frequency (per user)
 """
 
+
+
+
+
+# Import SparkSession to create a Spark session for processing data. 
+
 from pyspark.sql import SparkSession
+
+
+# Import various functions from pyspark.sql.functions to perform data transformations and aggregations.
+# These functions include:
+# - col: to reference columns in DataFrame operations
+# - count: to count occurrences of events
+# - sum: to calculate total revenue
+# - avg: to calculate average order value
+# - max and min: to find maximum and minimum purchase values
+# - when: to create conditional columns
+# - datediff: to calculate differences between timestamps
+# current_timestamp: to get the current timestamp for time-based calculations
+# lit: to create literal values in DataFrame operations
+# - round: to round numerical values
+# - countDistinct: to count unique products interacted with
+# - expr: to use SQL expressions in DataFrame operations        
 from pyspark.sql.functions import (
     col, count, sum as spark_sum, avg, max as spark_max, min as spark_min,
     when, datediff, current_timestamp, lit, round as spark_round,
     countDistinct, expr, to_timestamp, unix_timestamp
 )
+
+
+
+# # Import Window for window functions to define partitioning and ordering ((not used in current features but can be useful for future enhancements).)
+# for applying SQL-style window functions (e.g., row_number, lag, rank) in PySpark.
 from pyspark.sql.window import Window
+
+
+# Import sys for handling system-level operations, such as exiting the program in case of errors.
 import sys
+
+# Import datetime and timedelta for handling date and time operations, 
+# such as calculating time differences for features like purchases in the last 24 hours.
 from datetime import datetime, timedelta
 
-# Configuration
+
+
+
+
+# Configuration 
+# Define paths for Silver data and output features. 
+# These paths are constructed based on the directory structure of the project, 
+# allowing for easy access to the necessary data and storage of the generated features.
 import os
-BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events")
-FEATURES_PATH = os.path.join(BASE_PATH, "data/features/user_features")
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
+SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to the Silver Delta table containing raw event data
+FEATURES_PATH = os.path.join(BASE_PATH, "data/features/user_features") # Path where the generated features will be stored as a Delta table
 
 
 def create_spark_session() -> SparkSession:
