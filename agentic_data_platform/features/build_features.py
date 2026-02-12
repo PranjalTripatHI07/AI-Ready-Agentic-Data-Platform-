@@ -65,9 +65,19 @@ SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to 
 FEATURES_PATH = os.path.join(BASE_PATH, "data/features/user_features") # Path where the generated features will be stored as a Delta table
 
 
-def create_spark_session() -> SparkSession:
+
+
+
+# This Function to create and configure a Spark session with Delta Lake support.
+def create_spark_session() -> SparkSession: 
     """
     Create and configure Spark session with Delta Lake support.
+
+    This function:
+    Starts Spark
+    Configures it
+    Enables Delta Lake
+    Returns the Spark session
     """
     spark = SparkSession.builder \
         .appName("Feature_Engineering") \
@@ -80,9 +90,20 @@ def create_spark_session() -> SparkSession:
     return spark
 
 
-def read_silver_data(spark: SparkSession):
+
+
+# Function to read data from the Silver Delta table.
+def read_silver_data(spark: SparkSession): 
     """
     Read data from Silver Delta table.
+
+    This function:
+    Reads cleaned data from the Silver layer (Delta table)
+    Checks if it was read successfully
+    Returns the DataFrame
+    Stops the program if something fails
+
+    Think of it like: Go to storage, bring cleaned data, and give it to the pipeline.
     """
     print(f"Reading from Silver path: {SILVER_PATH}")
     
@@ -96,7 +117,12 @@ def read_silver_data(spark: SparkSession):
         sys.exit(1)
 
 
-def calculate_purchase_features(df, spark: SparkSession):
+
+
+
+
+# This Function calculate purchase-related features per user.
+def calculate_purchase_features(df, spark: SparkSession): 
     """
     Calculate purchase-related features per user.
     - purchases_last_24h: Number of purchases in last 24 hours
