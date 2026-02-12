@@ -42,25 +42,78 @@ import glob # For file pattern matching (e.g., to find all parquet files in a di
 
 
 
-# Configuration
-OLLAMA_MODEL = "phi"  # Faster than mistral
-OLLAMA_BASE_URL = "http://localhost:11434"
 
-import os as os_module
-BASE_PATH = os_module.path.dirname(os_module.path.dirname(os_module.path.abspath(__file__)))
+
+
+# LLM Configuration
+
+# OLLAMA_MODEL:
+#   Specifies the local Ollama model to use for generating responses.
+#   "phi" is selected because it is lightweight and faster than larger models
+#   like Mistral, making it suitable for local development and quick inference.
+#
+# OLLAMA_BASE_URL:
+#   Defines the endpoint where the Ollama server is running.
+#   By default, Ollama serves models locally at http://localhost:11434.
+#   This allows the application to send prompts to the model via API calls.
+OLLAMA_MODEL = "phi"  # Specifing the model to use with Ollama (phi is a smaller, faster model suitable for local use)
+OLLAMA_BASE_URL = "http://localhost:11434" # Default Ollama endpoint
+
+
+
+# Import the built-in 'os' module with an alias (os_module)
+# to avoid potential naming conflicts with other variables named 'os'.
+import os as os_module 
+
+
+# Determine the project’s base directory dynamically.
+# Step-by-step:
+# 1. __file__ → Gets the current file's path.
+# 2. abspath(__file__) → Converts it to an absolute path.
+# 3. dirname(...) → Moves one level up (parent directory).
+# 4. dirname(...) again → Moves one more level up.
+#
+# Result:
+# BASE_PATH points to the root directory of the project.
+# This ensures file paths work correctly regardless of where the script is executed from.
+BASE_PATH = os_module.path.dirname(os_module.path.dirname(os_module.path.abspath(__file__))) # Get the base path of the project by going up two levels from the current file's location
 
 GOLD_PATHS = {
-    "revenue_per_hour": os_module.path.join(BASE_PATH, "data/gold/revenue_per_hour"),
+    "revenue_per_hour": os_module.path.join(BASE_PATH, "data/gold/revenue_per_hour"), 
     "active_users_per_hour": os_module.path.join(BASE_PATH, "data/gold/active_users_per_hour"),
     "conversion_rate": os_module.path.join(BASE_PATH, "data/gold/conversion_rate")
-}
-
-FEATURES_PATH = os_module.path.join(BASE_PATH, "data/features/user_features")
+} # Define paths to the Gold layer Delta tables for revenue, active users, and conversion rate
 
 
+# Define path to the features table (user_features) in the features layer
+FEATURES_PATH = os_module.path.join(BASE_PATH, "data/features/user_features") 
+
+
+
+
+
+# DataQueryEngine class is responsible for loading Delta Lake tables as pandas DataFrames and executing SQL-like queries on them.
+# It provides methods to load tables, get schema information, execute queries, and summarize data for LLM context.
+# The class abstracts away the complexities of reading Delta tables and allows the AI agent to interact with the data in a more intuitive way.
+# Key functionalities include:
+# - Loading Delta tables from specified paths and storing them in a dictionary for easy access.
+# - Providing schema information for all loaded tables.
+# - Executing simple SQL-like queries (SELECT, WHERE, ORDER BY, LIMIT) on the loaded DataFrames.
+# - Summarizing data for use in LLM prompts, giving the AI agent context about the available data when answering questions.         
 class DataQueryEngine:
     """
     Engine for querying Delta Lake tables using pandas SQL.
+    Loads tables from the Gold layer and features, and allows executing SQL-like queries.
+
+    Methods:
+    - __init__: Initializes the engine and loads tables.
+    - _load_delta_table: Helper method to load a Delta table as a pandas DataFrame.
+    - _load_tables: Loads all specified tables into memory.
+    - get_table_schemas: Returns schema information for all loaded tables.
+    - execute_query: Executes a SQL-like query on the loaded tables and returns results.
+    - _execute_select: Helper method to execute SELECT queries using pandas.
+    - get_summary_stats: Provides summary statistics for a specified table.
+    - get_data_context: Summarizes all loaded data for use in LLM context.  
     """
     
     def __init__(self):
@@ -104,6 +157,7 @@ class DataQueryEngine:
             columns = ", ".join([f"{col} ({df[col].dtype})" for col in df.columns])
             schemas.append(f"Table: {table_name}\n  Columns: {columns}\n  Rows: {len(df)}")
         return "\n\n".join(schemas) if schemas else "No tables loaded yet. Run the Spark pipeline first."
+
     
     def execute_query(self, query: str) -> str:
         """Execute a pandas query on the available tables."""
@@ -189,6 +243,11 @@ class DataQueryEngine:
             context_parts.append(f"Data:\n{df.to_string()}")
         
         return "\n".join(context_parts)
+
+
+
+
+
 
 
 class AIAgent:
