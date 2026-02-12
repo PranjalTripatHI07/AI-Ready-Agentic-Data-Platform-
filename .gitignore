@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated data - reproducible via pipeline
+agentic_data_platform/data/bronze/
+agentic_data_platform/data/silver/
+agentic_data_platform/data/gold/
+agentic_data_platform/data/features/
+agentic_data_platform/data/models/
+agentic_data_platform/data/checkpoints/
+
+# But keep directory structure
+!agentic_data_platform/data/**/.gitkeep

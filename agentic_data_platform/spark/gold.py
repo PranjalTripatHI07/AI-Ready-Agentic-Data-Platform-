@@ -47,6 +47,7 @@ import sys
 # These paths are constructed based on the directory structure of the project.
 import os
 BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the base directory of the project
+SILVER_PATH = os.path.join(BASE_PATH, "data/silver/ecommerce_events") # Path to the Silver Delta table
 GOLD_PATH = os.path.join(BASE_PATH, "data/gold") # Define the path for the Gold layer output
 REVENUE_PATH = os.path.join(GOLD_PATH, "revenue_per_hour") # Define the path for the revenue per hour output
 ACTIVE_USERS_PATH = os.path.join(GOLD_PATH, "active_users_per_hour") # Define the path for the active users per hour output
