@@ -36,17 +36,6 @@ except ImportError:
 
 
 
-# FAISS vector store for semantic search over table metadata (required by tech stack)
-# FAISS (Facebook AI Similarity Search) enables fast similarity search over document embeddings,
-# allowing the agent to retrieve the most relevant table context for a given question.
-try:
-    from langchain_community.vectorstores import FAISS
-    from langchain_ollama import OllamaEmbeddings
-    FAISS_AVAILABLE = True
-except ImportError:
-    FAISS_AVAILABLE = False
-    print("⚠ FAISS or OllamaEmbeddings not available - vector search disabled")
-
 # For reading Delta tables
 import pandas as pd # For data manipulation and analysis (e.g., reading parquet files, handling DataFrames)
 import glob # For file pattern matching (e.g., to find all parquet files in a directory)
@@ -362,87 +351,19 @@ class DataQueryEngine:
         for table_name, df in self.tables.items(): # Iterate through all loaded tables in the self.tables dictionary, where table_name is the name of the table and df is the corresponding pandas DataFrame containing the data for that table. This allows us to access each table's data and metadata to include in the context for the LLM.
             context_parts.append(f"\n=== {table_name} ===") # Append a header for the current table to the context_parts list, using the table name to clearly indicate which table's data is being summarized. This helps to organize the context and make it easier for the AI agent to reference specific tables when formulating responses to user questions based on the available data.
             context_parts.append(f"Columns: {list(df.columns)}") # Append a line to the context_parts list that lists the columns of the current table, providing information about the structure of the data in that table. This allows the AI agent to understand what data is available in each table and reference specific columns when answering questions based on the data.
-            context_parts.append(f"Data:\n{df.to_string()}") # Append a line to the context_parts list that includes a string representation of the data in the current table, using the pandas to_string() method to convert the DataFrame into a readable format. This provides the AI agent with direct access to the contents of each table, allowing it to reference specific values 
-                                                             # and insights from the data when formulating responses to user questions based on the available data. If the DataFrame is large, it will be truncated based on pandas' default settings for displaying DataFrames as strings, which helps to keep the context manageable while still providing useful information about the data in each table.
+            # For large tables, include summary stats and a sample instead of all rows to keep the LLM prompt manageable
+            if len(df) > 50:
+                context_parts.append(f"Total rows: {len(df)}")
+                context_parts.append(f"Summary:\n{df.describe().to_string()}")
+                context_parts.append(f"Sample data (first 20 rows):\n{df.head(20).to_string()}")
+            else:
+                context_parts.append(f"Data:\n{df.to_string()}")
         
         return "\n".join(context_parts) # Join all the parts of the context together into a single string with newline characters separating each part, and return it as the final data context for the LLM. 
                                         # This comprehensive context includes the names of all loaded tables, their columns, and a string representation of their data, providing the AI agent with a rich source of information to reference when answering questions based on the available data. The resulting context can be quite large if there are many tables or if the tables contain a lot of data, 
                                         # so it may be necessary to consider ways to summarize or limit the amount of data included in the context for larger datasets to ensure that it remains manageable for the LLM to process effectively.
 
 
-
-    # build_vector_store creates a FAISS vector store from the loaded table metadata.
-    # It generates text documents from each table's schema, summary statistics, and sample data,
-    # then uses OllamaEmbeddings to create embeddings for semantic search.
-    # This allows the AI agent to retrieve the most relevant table context for a given question
-    # instead of including all data in the prompt, which improves response quality for large datasets.
-    # If FAISS or Ollama embeddings are not available, it returns None and the agent falls back
-    # to using the full data context (get_data_context) as before.
-    def build_vector_store(self):
-        """
-        Build a FAISS vector store from table metadata for semantic search.
-        
-        Creates text documents from each table's schema, summary statistics,
-        and sample data, then indexes them with FAISS for similarity search.
-        
-        Returns:
-            FAISS vector store instance, or None if FAISS is not available.
-        """
-        if not FAISS_AVAILABLE:
-            print("  ⚠ FAISS not available, skipping vector store creation")
-            return None
-        try:
-            embeddings = OllamaEmbeddings(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
-            documents = []
-            metadatas = []
-            for table_name, df in self.tables.items():
-                # Create a rich text document for each table with schema, stats, and sample data
-                doc = (
-                    f"Table: {table_name}\n"
-                    f"Columns: {', '.join([f'{col} ({df[col].dtype})' for col in df.columns])}\n"
-                    f"Row count: {len(df)}\n"
-                    f"Summary statistics:\n{df.describe().to_string()}\n"
-                    f"Sample data (first 5 rows):\n{df.head(5).to_string()}"
-                )
-                documents.append(doc)
-                metadatas.append({"table_name": table_name})
-            
-            if documents:
-                vector_store = FAISS.from_texts(documents, embeddings, metadatas=metadatas)
-                print(f"  ✓ FAISS vector store built with {len(documents)} table documents")
-                return vector_store
-            return None
-        except Exception as e:
-            print(f"  ⚠ FAISS vector store not available: {e}")
-            print("    Falling back to full data context for LLM queries.")
-            return None
-
-
-
-    # search_relevant_context uses the FAISS vector store to retrieve the most relevant
-    # table context for a given natural language query. This enables semantic search over
-    # the indexed table metadata, returning only the most relevant tables and their data
-    # rather than including all data in the LLM prompt.
-    # If the search fails for any reason, it falls back to the full data context.
-    def search_relevant_context(self, query: str, vector_store, k: int = 3) -> str:
-        """
-        Search the FAISS vector store for the most relevant table context.
-
-        Args:
-            query (str): The natural language question to search for.
-            vector_store: The FAISS vector store to search in.
-            k (int): Number of most relevant documents to retrieve (default: 3).
-
-        Returns:
-            str: The concatenated content of the most relevant documents,
-                 or the full data context if the search fails.
-        """
-        try:
-            results = vector_store.similarity_search(query, k=min(k, len(self.tables)))
-            return "\n\n".join([doc.page_content for doc in results])
-        except Exception as e:
-            print(f"  ⚠ FAISS search failed: {e}, using full data context")
-            return self.get_data_context()
 
 
 
@@ -469,12 +390,10 @@ class AIAgent:
     
     """
     
-    def __init__(self, query_engine: DataQueryEngine): 
+    def __init__(self, query_engine: DataQueryEngine):
         self.query_engine = query_engine # Store the provided DataQueryEngine instance in the agent for accessing the data when answering questions. This allows the agent to query the data and include relevant information in the prompts sent to the LLM, enabling it to generate informed responses based on the available data.
         self.llm = None # Initialize the LLM attribute to None, which will later be set to an instance of the OllamaLLM if it is successfully configured. This allows us to check if the LLM is available before attempting to invoke it for generating responses, and to provide fallback responses if the LLM is not configured properly or encounters errors.
-        self.vector_store = None # Initialize the FAISS vector store attribute to None. It will be populated after LLM initialization if FAISS and Ollama embeddings are available, enabling semantic search over table metadata for more targeted context retrieval.
         self._init_llm() # Call the method to initialize the Ollama LLM when the agent is created. This will attempt to set up the LLM and print the status of the configuration, allowing us to know if the LLM is ready to use for answering questions or if we need to rely on fallback responses based on the data context and schema information.
-        self._init_vector_store() # Build the FAISS vector store from the loaded table metadata. If FAISS or Ollama is not available, this will gracefully skip and the agent will fall back to using the full data context when answering questions.
     
     def _init_llm(self):
         """
@@ -502,32 +421,6 @@ class AIAgent:
             print("  Make sure Ollama is running: ollama serve")
             self.llm = None
 
-
-
-    # _init_vector_store initializes the FAISS vector store for semantic search over table metadata.
-    # It calls the DataQueryEngine's build_vector_store method to create a FAISS index from the loaded tables.
-    # If FAISS is not available or Ollama embeddings cannot be created, it sets vector_store to None
-    # and the agent will fall back to using the full data context (get_data_context) when answering questions.
-    # This ensures that existing functionality is preserved even when FAISS is not configured.
-    def _init_vector_store(self):
-        """
-        Initialize the FAISS vector store for semantic search in a background thread.
-
-        Builds a FAISS index from table metadata using OllamaEmbeddings.
-        Runs in a background thread so the agent can start immediately.
-        If FAISS or Ollama is unavailable, vector_store remains None and
-        the agent falls back to using the full data context.
-        """
-        import threading
-        def _build():
-            try:
-                self.vector_store = self.query_engine.build_vector_store()
-            except Exception as e:
-                print(f"  ⚠ Background FAISS build failed: {e}")
-                self.vector_store = None
-        thread = threading.Thread(target=_build, daemon=True)
-        thread.start()
-        print("  FAISS vector store building in background...")
 
 
 
@@ -559,14 +452,7 @@ class AIAgent:
         """
         
         # Get data context
-        # Use FAISS vector store for semantic search if available, otherwise fall back to full data context.
-        # When FAISS is available, it retrieves only the most relevant table data for the question,
-        # reducing prompt size and improving response quality for large datasets.
-        # When FAISS is not available, all existing behavior is preserved exactly as before.
-        if self.vector_store:
-            data_context = self.query_engine.search_relevant_context(question, self.vector_store)
-        else:
-            data_context = self.query_engine.get_data_context() # Retrieve the data context from the DataQueryEngine, which provides a summary of all loaded data including table names, columns, and a string representation of the data. This context will be included in the prompt sent to the LLM to give it the necessary information about the available data when generating a response to the user's question. The data context can be quite comprehensive, providing insights into the structure and contents of each table that the agent has access to, allowing the LLM to reference specific tables and values when formulating its answer.
+        data_context = self.query_engine.get_data_context() # Retrieve the data context from the DataQueryEngine, which provides a summary of all loaded data including table names, columns, and a string representation of the data. This context will be included in the prompt sent to the LLM to give it the necessary information about the available data when generating a response to the user's question.
         schema_info = self.query_engine.get_table_schemas() # Retrieve the schema information for all loaded tables from the DataQueryEngine, which provides details about the columns, data types, and row counts for each table. This schema information will be included in the prompt sent to the LLM to give it a clear understanding of the structure of the data it can reference when answering the user's question. By including both the data context and schema information in the prompt, we enable the LLM to generate more informed and accurate responses based on the available e-commerce data, allowing it to provide specific insights and numbers as needed to answer the user's question effectively.
         
         # Build prompt
