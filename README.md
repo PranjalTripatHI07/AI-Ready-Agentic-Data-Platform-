@@ -2,6 +2,8 @@
 
 End-to-end, open-source AI-ready data platform with real-time streaming, lakehouse modeling, ML pipelines, and an LLM-based analytics agent.
 
+> **New here?** Check out the [Getting Started Guide](GETTING_STARTED.md) for a beginner-friendly, baby-step walkthrough to run this project from scratch.
+
 ---
 
 ## 🏗️ Architecture
