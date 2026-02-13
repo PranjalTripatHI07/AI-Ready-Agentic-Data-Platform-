@@ -558,7 +558,68 @@ def run_interactive_session():
             print(f"❌ Error: {e}")
 
 
-def main(): # Define the main function as the entry point of the program. This function will call the run_interactive_session function to start the interactive question-answering session with the user. By defining a main function, we can ensure that the program's execution starts in a clear and organized way, allowing us to easily manage the flow of the program and potentially add additional setup or configuration steps in the future if needed before starting the interactive session.
+def run_agent(question: str) -> dict:
+    """
+    Run the AI agent with a question and return structured results.
+
+    Args:
+        question: Natural language question about the e-commerce data.
+
+    Returns:
+        dict with keys:
+            - sql: The SQL-like query derived from the question (if applicable).
+            - data: A pandas DataFrame with the result data.
+            - summary: LLM-generated explanation of the results.
+    """
+    query_engine = DataQueryEngine()
+    agent = AIAgent(query_engine)
+
+    summary = ""
+    sql = ""
+    data = pd.DataFrame()
+
+    # Check if it's a direct SQL query
+    if question.lower().startswith("sql "):
+        sql = question[4:].strip()
+        result_str = query_engine.execute_query(sql)
+        # Try to get a DataFrame from the matched table
+        from_match = re.search(r'from\s+(\w+)', sql, re.IGNORECASE)
+        if from_match:
+            table_name = from_match.group(1)
+            for t in query_engine.tables:
+                if t.lower() == table_name.lower() or table_name.lower() in t.lower():
+                    data = query_engine.tables[t].copy()
+                    limit_match = re.search(r'limit\s+(\d+)', sql, re.IGNORECASE)
+                    if limit_match:
+                        data = data.head(int(limit_match.group(1)))
+                    else:
+                        data = data.head(100)
+                    break
+        summary = result_str
+    elif question.lower() in ['describe', 'show tables', 'schema']:
+        summary = query_engine.get_table_schemas()
+    else:
+        # Use AI to answer
+        summary = agent.answer_question(question)
+        # Try to find the most relevant table for the question
+        q_lower = question.lower()
+        for table_name, df in query_engine.tables.items():
+            if any(keyword in q_lower for keyword in table_name.lower().split('_')):
+                data = df.copy()
+                break
+        # If no table matched, provide all gold data
+        if data.empty and query_engine.tables:
+            first_table = list(query_engine.tables.keys())[0]
+            data = query_engine.tables[first_table].copy()
+
+    return {
+        "sql": sql,
+        "data": data,
+        "summary": summary,
+    }
+
+
+def main(): # Define the main function as the entry point of the program.
     """
     Main entry point.
 
