@@ -55,7 +55,7 @@ import glob # For file pattern matching (e.g., to find all parquet files in a di
 #   Defines the endpoint where the Ollama server is running.
 #   By default, Ollama serves models locally at http://localhost:11434.
 #   This allows the application to send prompts to the model via API calls.
-OLLAMA_MODEL = "mistral"  # Specifying the model to use with Ollama (Mistral as required by the assignment)
+OLLAMA_MODEL = "TinyLlama"  # Specifying the model to use with Ollama (Mistral as required by the assignment)
 OLLAMA_BASE_URL = "http://localhost:11434" # Default Ollama endpoint
 
 
