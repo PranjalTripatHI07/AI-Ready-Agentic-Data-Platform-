@@ -511,13 +511,23 @@ class AIAgent:
     # This ensures that existing functionality is preserved even when FAISS is not configured.
     def _init_vector_store(self):
         """
-        Initialize the FAISS vector store for semantic search.
-        
+        Initialize the FAISS vector store for semantic search in a background thread.
+
         Builds a FAISS index from table metadata using OllamaEmbeddings.
+        Runs in a background thread so the agent can start immediately.
         If FAISS or Ollama is unavailable, vector_store remains None and
         the agent falls back to using the full data context.
         """
-        self.vector_store = self.query_engine.build_vector_store()
+        import threading
+        def _build():
+            try:
+                self.vector_store = self.query_engine.build_vector_store()
+            except Exception as e:
+                print(f"  ⚠ Background FAISS build failed: {e}")
+                self.vector_store = None
+        thread = threading.Thread(target=_build, daemon=True)
+        thread.start()
+        print("  FAISS vector store building in background...")
 
 
 

@@ -11,12 +11,13 @@ Schedule:
 """
 
 from datetime import datetime, timedelta
+import pendulum
 from airflow import DAG
-from airflow.operators.bash import BashOperator
-from airflow.operators.python import PythonOperator, BranchPythonOperator
-from airflow.operators.empty import EmptyOperator
-from airflow.utils.dates import days_ago
-from airflow.utils.trigger_rule import TriggerRule
+from airflow.providers.standard.operators.bash import BashOperator
+from airflow.providers.standard.operators.python import PythonOperator, BranchPythonOperator
+from airflow.providers.standard.operators.empty import EmptyOperator
+from airflow.providers.standard.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.task.trigger_rule import TriggerRule
 
 # Configuration
 PROJECT_PATH = "/opt/airflow/dags/agentic_data_platform"
@@ -44,8 +45,8 @@ with DAG(
     dag_id='ecommerce_data_pipeline',
     default_args=default_args,
     description='E-commerce data pipeline: Silver -> Gold layers',
-    schedule_interval='*/15 * * * *',  # Every 15 minutes
-    start_date=days_ago(1),
+    schedule='*/15 * * * *',  # Every 15 minutes
+    start_date=pendulum.today('UTC').add(days=-1),
     catchup=False,
     max_active_runs=1,
     tags=['ecommerce', 'delta-lake', 'spark'],
@@ -124,8 +125,8 @@ with DAG(
     dag_id='feature_engineering_pipeline',
     default_args=default_args,
     description='Feature engineering pipeline for ML',
-    schedule_interval='0 * * * *',  # Every hour
-    start_date=days_ago(1),
+    schedule='0 * * * *',  # Every hour
+    start_date=pendulum.today('UTC').add(days=-1),
     catchup=False,
     max_active_runs=1,
     tags=['ecommerce', 'features', 'ml'],
@@ -181,8 +182,8 @@ with DAG(
     dag_id='ml_training_pipeline',
     default_args=default_args,
     description='ML model training pipeline',
-    schedule_interval='0 2 * * *',  # Daily at 2 AM
-    start_date=days_ago(1),
+    schedule='0 2 * * *',  # Daily at 2 AM
+    start_date=pendulum.today('UTC').add(days=-1),
     catchup=False,
     max_active_runs=1,
     tags=['ecommerce', 'ml', 'training'],
@@ -274,15 +275,13 @@ with DAG(
     dag_id='full_pipeline_orchestration',
     default_args=default_args,
     description='Full end-to-end pipeline orchestration',
-    schedule_interval='0 3 * * *',  # Daily at 3 AM
-    start_date=days_ago(1),
+    schedule='0 3 * * *',  # Daily at 3 AM
+    start_date=pendulum.today('UTC').add(days=-1),
     catchup=False,
     max_active_runs=1,
     tags=['ecommerce', 'orchestration', 'master'],
 ) as master_dag:
-    
-    from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-    
+
     start_master = EmptyOperator(task_id='start')
     
     # Trigger data pipeline
