@@ -5,7 +5,6 @@ Uses Ollama with Mistral model to answer natural language questions.
 Executes SQL queries on Gold layer Delta tables.
 """
 
-import os # For path handling
 import json # For any JSON handling if needed
 import re # For parsing SQL-like queries
 
@@ -279,7 +278,8 @@ class DataQueryEngine:
             where_match = re.search(r'where\s+(.+?)(?:order|group|limit|$)', query, re.IGNORECASE) # Use regular expression to find the WHERE clause and its conditions in the query (case-insensitive match). It captures everything after "WHERE" until it hits "ORDER", "GROUP", "LIMIT", or the end of the string.
             if where_match: # If a WHERE clause is found in the query, we will attempt to apply the conditions to filter the DataFrame accordingly
                 condition = where_match.group(1).strip() # Extract the conditions from the regex match group and remove any leading/trailing whitespace
-                condition = condition.replace("=", "==").replace("<>", "!=") # Replace SQL-style operators with pandas query operators (e.g., "=" becomes "==", "<>" becomes "!=") to make the condition compatible with pandas' query method
+                condition = condition.replace("<>", "!=") # Replace SQL-style <> with !=
+                condition = re.sub(r'(?<![<>!])=(?!=)', '==', condition) # Replace single = with == while preserving >=, <=, !=, and ==
                 try:
                     df = df.query(condition) # Use the pandas query method to filter the DataFrame based on the extracted conditions. If the condition is valid, it will return a new DataFrame with only the rows that satisfy the condition.
                 except: # If there is an error in the condition (e.g., syntax error, invalid column name), we will ignore the WHERE clause and proceed without filtering the DataFrame. This allows us to still return results even if the condition is not perfectly formatted.

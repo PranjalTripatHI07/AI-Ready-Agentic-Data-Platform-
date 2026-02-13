@@ -37,15 +37,14 @@ from sklearn.metrics import (
 import warnings 
 warnings.filterwarnings('ignore')
 
-# Configuration 
+# Configuration
 # Define file paths and feature/target columns. Adjust these paths as needed for your environment.
-import os as os_module
-BASE_PATH = os_module.path.dirname(os_module.path.dirname(os_module.path.abspath(__file__))) # Get the parent directory of the current file
-FEATURES_PATH = os_module.path.join(BASE_PATH, "data/features/user_features") # Path to the directory containing the feature data (Delta Lake or parquet files)
-MODEL_PATH = os_module.path.join(BASE_PATH, "data/models") # Path to the directory where the trained model, scaler, and metrics will be saved
-MODEL_FILE = os_module.path.join(MODEL_PATH, "purchase_predictor.pkl") # Path to save the trained logistic regression model as a pickle file
-SCALER_FILE = os_module.path.join(MODEL_PATH, "scaler.pkl") # Path to save the feature scaler used for scaling the training data, also as a pickle file
-METRICS_FILE = os_module.path.join(MODEL_PATH, "metrics.json") # Path to save the model performance metrics in JSON format, which will include accuracy, precision, recall, F1 score, ROC AUC, confusion matrix, and feature importance
+BASE_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) # Get the parent directory of the current file
+FEATURES_PATH = os.path.join(BASE_PATH, "data/features/user_features") # Path to the directory containing the feature data (Delta Lake or parquet files)
+MODEL_PATH = os.path.join(BASE_PATH, "data/models") # Path to the directory where the trained model, scaler, and metrics will be saved
+MODEL_FILE = os.path.join(MODEL_PATH, "purchase_predictor.pkl") # Path to save the trained logistic regression model as a pickle file
+SCALER_FILE = os.path.join(MODEL_PATH, "scaler.pkl") # Path to save the feature scaler used for scaling the training data, also as a pickle file
+METRICS_FILE = os.path.join(MODEL_PATH, "metrics.json") # Path to save the model performance metrics in JSON format, which will include accuracy, precision, recall, F1 score, ROC AUC, confusion matrix, and feature importance
 
 
 
