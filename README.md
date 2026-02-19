@@ -1344,15 +1344,7 @@ agentic_data_platform/
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-**MIT License Summary:**
-- ✅ Use commercially
-- ✅ Modify the code
-- ✅ Distribute copies
-- ✅ Private use
-- ⚠️ Include license notice
-- ⚠️ No liability provided
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -1402,7 +1394,7 @@ bash scripts/health_check.sh
 
 ### ⭐ If you found this helpful, please star the repository!
 
- **Built by PranjalTripatHI07 for the data engineering community**
+ **Made by [Pranjal Tripathi](https://github.com/pranjal-tripathi)**
 
 Back to Top
 
