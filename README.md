@@ -2,9 +2,9 @@
 
 <div align="center">
   
-# InsightFlux AI (AI-Ready Agentic Data Platform)
+# 📈 InsightFlux AI (AI-Ready Agentic Data Platform)
 
-![Platform Overview](<agentic_data_platform/Video to GIF Converter (1).gif>)
+![Platform Overview](<agentic_data_platform/Video to GIF Converter.gif>)
   
 ![Platform Overview](<agentic_data_platform/Video to GIF Converter (1).gif>)
 
