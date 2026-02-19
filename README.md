@@ -1394,7 +1394,7 @@ bash scripts/health_check.sh
 
 ### ⭐ If you found this helpful, please star the repository!
 
- **Made by [Pranjal Tripathi](https://github.com/pranjal-tripathi)**
+ **Made by [Pranjal Tripathi](https://github.com/PranjalTripatHI07)**
 
 Back to Top
 
