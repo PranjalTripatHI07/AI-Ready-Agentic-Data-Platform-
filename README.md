@@ -4,9 +4,9 @@
   
 # 📈 InsightFlux AI (AI-Ready Agentic Data Platform)
 
-![Platform Overview](<agentic_data_platform/v1.gif>)
+![Platform Overview](<agentic_data_platform/v2.gif>)
   
-![Platform Overview](<agentic_data_platform/Video to GIF Converter (1).gif>)
+![Platform Overview](<agentic_data_platform/v1.gif>)
 
 
 **An intelligent, end-to-end data platform that processes e-commerce events in real-time, engineers features, trains ML models, and provides AI-powered insights through an interactive dashboard.**
